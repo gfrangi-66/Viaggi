@@ -47,7 +47,7 @@ const CLIENT_COLORS = ["#4B8BE8","#E8B84B","#4BE8C3","#C34BE8","#E87B4B","#8BE84
 // ─── LocalStorage fallback ────────────────────────────────────────────────────
 const LS_KEY = "notaspese_v4";
 const LS_CREDS = "notaspese_creds";
-const defaultData = () => ({ spese: [], clienti: [], profilo: { nome: "", piva: "", tariffaKm: 0.40, anthropicKey: "" } });
+const defaultData = () => ({ spese: [], clienti: [], profilo: { nome: "", piva: "", tariffaKm: 0.40, anthropicKey: "", aiProxyUrl: "" } });
 const lsLoad = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || defaultData(); } catch { return defaultData(); } };
 const lsSave = (d) => localStorage.setItem(LS_KEY, JSON.stringify(d));
 
@@ -268,10 +268,11 @@ const KC = {
 };
 
 // ─── AI scontrino ─────────────────────────────────────────────────────────────
-const analizzaScontrino = async (base64Image, mediaType, apiKey) => {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+const analizzaScontrino = async (base64Image, mediaType, apiKey, proxyUrl) => {
+  const endpoint = proxyUrl ? proxyUrl.replace(/\/$/, "") : "https://api.anthropic.com/v1/messages";
+  const res = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-allow-browser": "true" },
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514", max_tokens: 1000,
       system: `Sei un assistente che analizza scontrini italiani. Rispondi SOLO con JSON valido senza markdown.
@@ -602,6 +603,7 @@ function App() {
   const fileRef = useRef();
   const tariffaKm = parseFloat(data.profilo?.tariffaKm) || 0.40;
   const anthropicKey = data.profilo?.anthropicKey || "";
+  const aiProxyUrl = data.profilo?.aiProxyUrl || "";
 
   const [periodo, setPeriodo] = useState(()=>{ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); });
   const [filtroCliente, setFiltroCliente]     = useState("tutti");
@@ -791,7 +793,8 @@ function App() {
       setAiLoading(true); setAiSuggest(null);
       try {
         if(!anthropicKey){showToast("Inserisci la chiave API Anthropic nelle Impostazioni","err");setAiLoading(false);return;}
-        const r=await analizzaScontrino(base64,mediaType,anthropicKey); setAiSuggest(r);
+        if(!aiProxyUrl){showToast("Inserisci l'URL del proxy Cloudflare nelle Impostazioni","err");setAiLoading(false);return;}
+        const r=await analizzaScontrino(base64,mediaType,anthropicKey,aiProxyUrl); setAiSuggest(r);
       }
       catch(e) { showToast("AI: "+(e.message||"errore"),"err"); }
       finally { setAiLoading(false); }
@@ -1179,7 +1182,15 @@ function App() {
               style={S.input}/>
             <div style={{fontSize:11,color:"#555",marginBottom:18,paddingLeft:2}}>
               Ottieni la chiave su <strong style={{color:"#4B8BE8"}}>console.anthropic.com</strong> → API Keys → Create Key.
-              Costo: pochi centesimi/mese per uso personale.
+            </div>
+
+            <label style={S.label}>URL Proxy AI (Cloudflare Worker)</label>
+            <input type="text" placeholder="https://anthropic-proxy.tuonome.workers.dev"
+              value={profilo.aiProxyUrl||""}
+              onChange={e=>setProfilo(p=>({...p,aiProxyUrl:e.target.value}))}
+              style={S.input}/>
+            <div style={{fontSize:11,color:"#555",marginBottom:18,paddingLeft:2}}>
+              Necessario per evitare blocchi CORS dal browser. Segui le istruzioni nel file <strong style={{color:"#4B8BE8"}}>cloudflare-worker.js</strong>.
             </div>
 
             <button style={S.saveBtn} onClick={salvaProfilo}>💾 Salva profilo</button>
