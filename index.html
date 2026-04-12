@@ -50,8 +50,31 @@ const LS_CREDS = "notaspese_creds";
 const defaultData = () => ({ spese: [], clienti: [], profilo: { nome: "", piva: "", tariffaKm: 0.40 } });
 const lsLoad = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || defaultData(); } catch { return defaultData(); } };
 const lsSave = (d) => localStorage.setItem(LS_KEY, JSON.stringify(d));
-const lsLoadCreds = () => { try { return JSON.parse(localStorage.getItem(LS_CREDS)) || { url: "", anonKey: "" }; } catch { return { url: "", anonKey: "" }; } };
-const lsSaveCreds = (c) => localStorage.setItem(LS_CREDS, JSON.stringify(c));
+
+// Credenziali salvate in localStorage + cookie (max persistenza su iOS PWA)
+const lsLoadCreds = () => {
+  // Prima prova localStorage
+  try {
+    const ls = JSON.parse(localStorage.getItem(LS_CREDS));
+    if (ls && ls.url) return ls;
+  } catch {}
+  // Fallback: cookie
+  try {
+    const match = document.cookie.match(/notaspese_creds=([^;]+)/);
+    if (match) return JSON.parse(decodeURIComponent(match[1]));
+  } catch {}
+  return { url: "", anonKey: "" };
+};
+const lsSaveCreds = (creds) => {
+  // Salva in localStorage
+  try { localStorage.setItem(LS_CREDS, JSON.stringify(creds)); } catch {}
+  // Salva anche in cookie (1 anno, path=/)
+  try {
+    const val = encodeURIComponent(JSON.stringify(creds));
+    const exp = new Date(Date.now() + 365*24*60*60*1000).toUTCString();
+    document.cookie = `notaspese_creds=${val}; expires=${exp}; path=/; SameSite=Lax`;
+  } catch {}
+};
 
 // ─── Supabase client (vanilla fetch, no SDK — zero dipendenze) ────────────────
 class SupabaseClient {
@@ -97,7 +120,15 @@ class SupabaseClient {
   }
 
   async getSession() {
-    const stored = localStorage.getItem("sb_session");
+    // Prova localStorage, poi cookie
+    let stored = null;
+    try { stored = localStorage.getItem("sb_session"); } catch {}
+    if (!stored) {
+      try {
+        const match = document.cookie.match(/sb_session=([^;]+)/);
+        if (match) stored = decodeURIComponent(match[1]);
+      } catch {}
+    }
     if (!stored) return null;
     try {
       const s = JSON.parse(stored);
@@ -121,11 +152,20 @@ class SupabaseClient {
 
   saveSession(data) {
     const s = { ...data, expires_at: Math.floor(Date.now()/1000) + (data.expires_in || 3600) };
-    localStorage.setItem("sb_session", JSON.stringify(s));
+    const val = JSON.stringify(s);
+    try { localStorage.setItem("sb_session", val); } catch {}
+    try {
+      const exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
+      document.cookie = `sb_session=${encodeURIComponent(val)}; expires=${exp}; path=/; SameSite=Lax`;
+    } catch {}
     this.token = data.access_token;
   }
 
-  logout() { localStorage.removeItem("sb_session"); this.token = null; }
+  logout() {
+    try { localStorage.removeItem("sb_session"); } catch {}
+    try { document.cookie = "sb_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; } catch {}
+    this.token = null;
+  }
 
   // DB: REST API
   async select(table, filters = "") {
