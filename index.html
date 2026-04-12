@@ -76,6 +76,56 @@ const lsSaveCreds = (creds) => {
   } catch {}
 };
 
+
+// ─── Error Logger (visibile in-app per debug mobile) ─────────────────────────
+const errorLog = [];
+const addLog = (msg) => {
+  const ts = new Date().toLocaleTimeString("it-IT");
+  errorLog.unshift("["+ts+"] "+String(msg));
+  if(errorLog.length > 20) errorLog.pop();
+};
+// Cattura errori globali
+if(typeof window !== "undefined") {
+  window.onerror = (msg, src, line, col, err) => {
+    addLog("ERROR: "+msg+" ("+src?.split("/").pop()+":"+line+")");
+    return false;
+  };
+  window.onunhandledrejection = (e) => {
+    addLog("PROMISE: "+(e.reason?.message || String(e.reason)));
+  };
+}
+
+function ErrorPanel() {
+  const [open, setOpen] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const refresh = () => setLogs([...errorLog]);
+  if(!open) return (
+    <div style={{position:"fixed",bottom:170,right:16,zIndex:999}}
+      onClick={()=>{refresh();setOpen(true);}}>
+      <div style={{background:"#1a1a24",border:"1px solid #333",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#666",cursor:"pointer"}}>
+        🐛 log
+      </div>
+    </div>
+  );
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:1000,padding:16,overflowY:"auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+        <div style={{color:"#fff",fontWeight:700}}>Error Log</div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>{errorLog.length=0;setLogs([]);}} style={{background:"#c0392b",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer"}}>Pulisci</button>
+          <button onClick={()=>setOpen(false)} style={{background:"#333",color:"#fff",border:"none",borderRadius:6,padding:"4px 10px",fontSize:12,cursor:"pointer"}}>Chiudi</button>
+        </div>
+      </div>
+      {logs.length===0 ? <div style={{color:"#555",fontSize:13}}>Nessun errore registrato</div> :
+        logs.map((l,i)=>(
+          <div key={i} style={{fontSize:11,color:l.includes("ERROR")||l.includes("PROMISE")?"#e87b4b":"#aaa",marginBottom:6,padding:"6px 8px",background:"#111",borderRadius:6,wordBreak:"break-all",lineHeight:1.4}}>{l}</div>
+        ))
+      }
+      <button onClick={refresh} style={{marginTop:12,background:"#2a2a38",color:"#aaa",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,cursor:"pointer",width:"100%"}}>↻ Aggiorna</button>
+    </div>
+  );
+}
+
 // ─── Supabase client (vanilla fetch, no SDK — zero dipendenze) ────────────────
 class SupabaseClient {
   constructor(url, anonKey) {
@@ -803,32 +853,39 @@ function App() {
       const reader = new FileReader();
       reader.onerror = () => { showToast("Errore lettura file","err"); setAiLoading(false); };
       reader.onload = async (ev) => {
+        addLog('fotoHandler: onload started');
         try {
           const dataUrl = ev.target.result;
           if (!dataUrl) { showToast("Foto non leggibile","err"); return; }
           const base64 = dataUrl.split(",")[1];
           if (!base64) { showToast("Foto non valida","err"); return; }
           // Save photo immediately
+          addLog('foto salvata, base64 len='+base64?.length);
           setForm(f=>({...f, foto:dataUrl, fotoMediaType:mediaType}));
           // AI analysis only if keys are configured
           if (!anthropicKey || !aiProxyUrl) {
             showToast("Foto salvata. Configura AI nelle Impostazioni per l'analisi automatica","ok");
             return;
           }
+          addLog('avvio AI analisi...');
           setAiLoading(true); setAiSuggest(null);
           try {
+            addLog('chiamata AI completata');
             const r = await analizzaScontrino(base64, mediaType, anthropicKey, aiProxyUrl);
+            addLog('risultato AI: '+JSON.stringify(r).substring(0,100));
             if (r && Object.keys(r).length > 0) {
               setAiSuggest(r);
             } else {
               showToast("AI: nessun dato estratto dallo scontrino","err");
             }
           } catch(aiErr) {
+            addLog('AI CATCH: '+aiErr.message);
             showToast("AI: "+(aiErr.message||"errore"),"err");
           } finally {
             setAiLoading(false);
           }
         } catch(innerErr) {
+          addLog('INNER CATCH: '+innerErr.message);
           setAiLoading(false);
           showToast("Errore elaborazione foto","err");
         }
@@ -1252,6 +1309,7 @@ function App() {
         </div>
       )}
 
+      <ErrorPanel/>
       {view==="lista"&&<button style={S.fab} onClick={()=>{setForm(blankForm());setAiSuggest(null);setView("nuova");}}>＋</button>}
     </div>
   );
