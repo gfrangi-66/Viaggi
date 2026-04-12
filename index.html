@@ -275,18 +275,29 @@ const analizzaScontrino = async (base64Image, mediaType, apiKey, proxyUrl) => {
     headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514", max_tokens: 1000,
-      system: `Sei un assistente che analizza scontrini italiani. Rispondi SOLO con JSON valido senza markdown.
-Estrai: { "importo": numero|null, "descrizione": "stringa breve", "categoria": "pasto"|"hotel"|"treno"|"taxi"|"pedaggi"|"parcheggi"|"altro", "data": "YYYY-MM-DD"|null, "note": "esercente" }`,
+      system: "Sei un assistente che analizza scontrini italiani. Rispondi SOLO con un oggetto JSON valido, nessun testo prima o dopo, nessun markdown. Estrai: { \"importo\": numero o null, \"descrizione\": \"stringa breve\", \"categoria\": \"pasto\" o \"hotel\" o \"treno\" o \"taxi\" o \"pedaggi\" o \"parcheggi\" o \"altro\", \"data\": \"YYYY-MM-DD\" o null, \"note\": \"nome esercente\" }",
       messages: [{ role: "user", content: [
         { type: "image", source: { type: "base64", media_type: mediaType, data: base64Image } },
-        { type: "text", text: "Analizza questo scontrino." }
+        { type: "text", text: "Analizza questo scontrino e rispondi solo con il JSON." }
       ]}]
     })
   });
-  if (!res.ok) throw new Error("API error " + res.status);
+  if (!res.ok) {
+    let errMsg = "Errore API " + res.status;
+    try { const e = await res.json(); errMsg = e.error?.message || errMsg; } catch {}
+    throw new Error(errMsg);
+  }
   const d = await res.json();
   const text = (d.content||[]).find(b=>b.type==="text")?.text || "{}";
-  return JSON.parse(text.replace(/```json|```/g,"").trim());
+  // Safe JSON parse — never crash
+  try {
+    const cleaned = text.replace(/```json|```/g,"").trim();
+    // Extract JSON object even if there's extra text around it
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    return match ? JSON.parse(match[0]) : {};
+  } catch {
+    return {};
+  }
 };
 
 // ─── PDF ──────────────────────────────────────────────────────────────────────
@@ -782,24 +793,51 @@ function App() {
   };
 
   // ── AI foto ──
-  const fotoHandler = async (e) => {
-    const file=e.target.files[0]; if(!file)return;
-    const mediaType=file.type||"image/jpeg";
-    const reader=new FileReader();
-    reader.onload=async(ev)=>{
-      const dataUrl=ev.target.result;
-      const base64=dataUrl.split(",")[1];
-      setForm(f=>({...f,foto:dataUrl,fotoMediaType:mediaType}));
-      setAiLoading(true); setAiSuggest(null);
-      try {
-        if(!anthropicKey){showToast("Inserisci la chiave API Anthropic nelle Impostazioni","err");setAiLoading(false);return;}
-        if(!aiProxyUrl){showToast("Inserisci l'URL del proxy Cloudflare nelle Impostazioni","err");setAiLoading(false);return;}
-        const r=await analizzaScontrino(base64,mediaType,anthropicKey,aiProxyUrl); setAiSuggest(r);
-      }
-      catch(e) { showToast("AI: "+(e.message||"errore"),"err"); }
-      finally { setAiLoading(false); }
-    };
-    reader.readAsDataURL(file);
+  const fotoHandler = (e) => {
+    try {
+      const file = e.target.files[0];
+      // Reset input so same file can be selected again
+      e.target.value = "";
+      if (!file) return;
+      const mediaType = file.type || "image/jpeg";
+      const reader = new FileReader();
+      reader.onerror = () => { showToast("Errore lettura file","err"); setAiLoading(false); };
+      reader.onload = async (ev) => {
+        try {
+          const dataUrl = ev.target.result;
+          if (!dataUrl) { showToast("Foto non leggibile","err"); return; }
+          const base64 = dataUrl.split(",")[1];
+          if (!base64) { showToast("Foto non valida","err"); return; }
+          // Save photo immediately
+          setForm(f=>({...f, foto:dataUrl, fotoMediaType:mediaType}));
+          // AI analysis only if keys are configured
+          if (!anthropicKey || !aiProxyUrl) {
+            showToast("Foto salvata. Configura AI nelle Impostazioni per l'analisi automatica","ok");
+            return;
+          }
+          setAiLoading(true); setAiSuggest(null);
+          try {
+            const r = await analizzaScontrino(base64, mediaType, anthropicKey, aiProxyUrl);
+            if (r && Object.keys(r).length > 0) {
+              setAiSuggest(r);
+            } else {
+              showToast("AI: nessun dato estratto dallo scontrino","err");
+            }
+          } catch(aiErr) {
+            showToast("AI: "+(aiErr.message||"errore"),"err");
+          } finally {
+            setAiLoading(false);
+          }
+        } catch(innerErr) {
+          setAiLoading(false);
+          showToast("Errore elaborazione foto","err");
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch(outerErr) {
+      setAiLoading(false);
+      showToast("Errore","err");
+    }
   };
 
   const applicaSuggerimento = () => {
