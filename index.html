@@ -47,7 +47,7 @@ const CLIENT_COLORS = ["#4B8BE8","#E8B84B","#4BE8C3","#C34BE8","#E87B4B","#8BE84
 // ─── LocalStorage fallback ────────────────────────────────────────────────────
 const LS_KEY = "notaspese_v4";
 const LS_CREDS = "notaspese_creds";
-const defaultData = () => ({ spese: [], clienti: [], profilo: { nome: "", piva: "", tariffaKm: 0.40 } });
+const defaultData = () => ({ spese: [], clienti: [], profilo: { nome: "", piva: "", tariffaKm: 0.40, anthropicKey: "" } });
 const lsLoad = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || defaultData(); } catch { return defaultData(); } };
 const lsSave = (d) => localStorage.setItem(LS_KEY, JSON.stringify(d));
 
@@ -268,10 +268,10 @@ const KC = {
 };
 
 // ─── AI scontrino ─────────────────────────────────────────────────────────────
-const analizzaScontrino = async (base64Image, mediaType) => {
+const analizzaScontrino = async (base64Image, mediaType, apiKey) => {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-allow-browser": "true" },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514", max_tokens: 1000,
       system: `Sei un assistente che analizza scontrini italiani. Rispondi SOLO con JSON valido senza markdown.
@@ -359,7 +359,7 @@ const esportaPDF = (spese, profilo, clienteNome, progetto, periodo, tariffaKm, c
     totale += importo;
 
     doc.setTextColor(70,70,70); doc.setFontSize(7.5);
-    doc.text(s.data, cols[0], y);
+    const [sy,sm,sd]=s.data.split("-"); doc.text(sd+"/"+sm+"/"+(sy.slice(2)), cols[0], y);
     doc.text(cat ? cat.label.substring(0,8) : s.categoria, cols[1], y);
 
     if(multiCliente){
@@ -601,6 +601,7 @@ function App() {
   const [toast, setToast]     = useState(null);
   const fileRef = useRef();
   const tariffaKm = parseFloat(data.profilo?.tariffaKm) || 0.40;
+  const anthropicKey = data.profilo?.anthropicKey || "";
 
   const [periodo, setPeriodo] = useState(()=>{ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); });
   const [filtroCliente, setFiltroCliente]     = useState("tutti");
@@ -788,8 +789,11 @@ function App() {
       const base64=dataUrl.split(",")[1];
       setForm(f=>({...f,foto:dataUrl,fotoMediaType:mediaType}));
       setAiLoading(true); setAiSuggest(null);
-      try { const r=await analizzaScontrino(base64,mediaType); setAiSuggest(r); }
-      catch { showToast("AI non disponibile","err"); }
+      try {
+        if(!anthropicKey){showToast("Inserisci la chiave API Anthropic nelle Impostazioni","err");setAiLoading(false);return;}
+        const r=await analizzaScontrino(base64,mediaType,anthropicKey); setAiSuggest(r);
+      }
+      catch(e) { showToast("AI: "+(e.message||"errore"),"err"); }
       finally { setAiLoading(false); }
     };
     reader.readAsDataURL(file);
@@ -1168,6 +1172,16 @@ function App() {
               <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:12,color:"#888",pointerEvents:"none"}}>€/km</div>
             </div>
             <div style={{fontSize:11,color:"#555",marginBottom:18,paddingLeft:2}}>ACI 2024: 0,40 €/km · modifica per altri veicoli o tariffe contrattuali</div>
+
+            <label style={S.label}>Chiave API Anthropic (AI scontrini)</label>
+            <input type="password" placeholder="sk-ant-..." value={profilo.anthropicKey||""}
+              onChange={e=>setProfilo(p=>({...p,anthropicKey:e.target.value}))}
+              style={S.input}/>
+            <div style={{fontSize:11,color:"#555",marginBottom:18,paddingLeft:2}}>
+              Ottieni la chiave su <strong style={{color:"#4B8BE8"}}>console.anthropic.com</strong> → API Keys → Create Key.
+              Costo: pochi centesimi/mese per uso personale.
+            </div>
+
             <button style={S.saveBtn} onClick={salvaProfilo}>💾 Salva profilo</button>
             <div style={{...S.infoBox,marginTop:20}}>
               <strong style={{color:"#d4a847"}}>⚠ Backup locale</strong><br/>
