@@ -15,17 +15,13 @@
     input, select, button, textarea { font-family: inherit; }
     select option { background: #17171f; color: #f0ede6; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    /* PWA safe area */
     #root { padding-bottom: env(safe-area-inset-bottom); }
-    /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 2px; }
   </style>
-  <!-- React 18 -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel standalone for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
@@ -74,25 +70,28 @@ class SupabaseClient {
     };
   }
 
-  // Auth: magic link
-  async sendMagicLink(email) {
-    const res = await fetch(`${this.url}/auth/v1/otp`, {
+  // Auth: email + password
+  async signUp(email, password) {
+    const res = await fetch(`${this.url}/auth/v1/signup`, {
       method: "POST",
       headers: this.headers(),
-      body: JSON.stringify({ email, create_user: true }),
+      body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.msg || e.error_description || "Errore invio magic link"); }
-    return true;
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || d.error_description || d.message || "Errore registrazione");
+    if (!d.access_token && d.id) throw new Error("CONFIRM_EMAIL");
+    this.token = d.access_token;
+    return d;
   }
 
-  async verifyOtp(email, token) {
-    const res = await fetch(`${this.url}/auth/v1/verify`, {
+  async signIn(email, password) {
+    const res = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: this.headers(),
-      body: JSON.stringify({ email, token, type: "email" }),
+      body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.msg || e.error_description || "Codice non valido"); }
     const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || d.error_description || d.message || "Email o password non corretti");
     this.token = d.access_token;
     return d;
   }
@@ -304,30 +303,38 @@ const loadJsPDF = (cb) => {
 
 // ─── Login Screen ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
-  const [email, setEmail]     = useState("");
-  const [codice, setCodice]   = useState("");
-  const [fase, setFase]       = useState("email"); // email | codice
-  const [loading, setLoading] = useState(false);
-  const [errore, setErrore]   = useState("");
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [modalita, setModalita] = useState("accedi"); // accedi | registrati
+  const [loading, setLoading]   = useState(false);
+  const [errore, setErrore]     = useState("");
+  const [info, setInfo]         = useState("");
 
-  const inviaLink = async () => {
-    if (!email.trim()) { setErrore("Inserisci la tua email"); return; }
-    setLoading(true); setErrore("");
+  const accedi = async () => {
+    if (!email.trim() || !password.trim()) { setErrore("Inserisci email e password"); return; }
+    setLoading(true); setErrore(""); setInfo("");
     try {
-      await getSB().sendMagicLink(email.trim());
-      setFase("codice");
+      const d = await getSB().signIn(email.trim(), password.trim());
+      getSB().saveSession(d);
+      onLogin(d.user);
     } catch(e) { setErrore(e.message); }
     finally { setLoading(false); }
   };
 
-  const verificaCodice = async () => {
-    if (!codice.trim()) { setErrore("Inserisci il codice"); return; }
-    setLoading(true); setErrore("");
+  const registrati = async () => {
+    if (!email.trim() || !password.trim()) { setErrore("Inserisci email e password"); return; }
+    if (password.length < 6) { setErrore("La password deve avere almeno 6 caratteri"); return; }
+    setLoading(true); setErrore(""); setInfo("");
     try {
-      const d = await getSB().verifyOtp(email.trim(), codice.trim());
+      const d = await getSB().signUp(email.trim(), password.trim());
       getSB().saveSession(d);
       onLogin(d.user);
-    } catch(e) { setErrore(e.message); }
+    } catch(e) {
+      if (e.message === "CONFIRM_EMAIL") {
+        setInfo("Controlla la tua email per confermare l'account, poi torna qui e accedi.");
+        setModalita("accedi");
+      } else { setErrore(e.message); }
+    }
     finally { setLoading(false); }
   };
 
@@ -336,35 +343,33 @@ function LoginScreen({ onLogin }) {
       <div style={L.card}>
         <div style={L.logo}>NS</div>
         <div style={L.title}>NotaSpese</div>
-        <div style={L.sub}>Accedi per sincronizzare i tuoi dati</div>
+        <div style={L.sub}>{modalita === "accedi" ? "Accedi al tuo account" : "Crea un account"}</div>
 
-        {fase === "email" ? (
-          <>
-            <label style={L.label}>La tua email</label>
-            <input type="email" placeholder="gianni@esempio.it" value={email}
-              onChange={e=>setEmail(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&inviaLink()}
-              style={L.input} autoFocus/>
-            {errore && <div style={L.errore}>{errore}</div>}
-            <button style={L.btn} onClick={inviaLink} disabled={loading}>
-              {loading ? "Invio in corso…" : "✉ Invia codice di accesso"}
-            </button>
-          </>
-        ) : (
-          <>
-            <div style={L.sentInfo}>Codice inviato a <strong>{email}</strong><br/>Controlla la tua email (anche spam)</div>
-            <label style={L.label}>Codice a 6 cifre</label>
-            <input type="text" inputMode="numeric" placeholder="123456" value={codice}
-              onChange={e=>setCodice(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&verificaCodice()}
-              style={{...L.input,letterSpacing:"0.3em",fontSize:20,textAlign:"center"}} autoFocus maxLength={6}/>
-            {errore && <div style={L.errore}>{errore}</div>}
-            <button style={L.btn} onClick={verificaCodice} disabled={loading}>
-              {loading ? "Verifica…" : "✓ Accedi"}
-            </button>
-            <button style={L.backBtn} onClick={()=>{setFase("email");setErrore("");setCodice("");}}>← Cambia email</button>
-          </>
-        )}
+        {/* Tab accedi / registrati */}
+        <div style={L.tabs}>
+          <button style={{...L.tab, ...(modalita==="accedi"?L.tabActive:{})}} onClick={()=>{setModalita("accedi");setErrore("");setInfo("");}}>Accedi</button>
+          <button style={{...L.tab, ...(modalita==="registrati"?L.tabActive:{})}} onClick={()=>{setModalita("registrati");setErrore("");setInfo("");}}>Registrati</button>
+        </div>
+
+        {info && <div style={L.infoBox}>{info}</div>}
+
+        <label style={L.label}>Email</label>
+        <input type="email" placeholder="gianni@esempio.it" value={email}
+          onChange={e=>setEmail(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&(modalita==="accedi"?accedi():registrati())}
+          style={L.input} autoFocus/>
+
+        <label style={L.label}>Password</label>
+        <input type="password" placeholder={modalita==="registrati"?"Minimo 6 caratteri":"La tua password"} value={password}
+          onChange={e=>setPassword(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&(modalita==="accedi"?accedi():registrati())}
+          style={L.input}/>
+
+        {errore && <div style={L.errore}>{errore}</div>}
+
+        <button style={L.btn} onClick={modalita==="accedi"?accedi:registrati} disabled={loading}>
+          {loading ? "…" : modalita==="accedi" ? "→ Accedi" : "✓ Crea account"}
+        </button>
       </div>
     </div>
   );
@@ -374,13 +379,15 @@ const L = {
   card:{background:"#17171f",border:"1px solid #2a2a38",borderRadius:20,padding:"32px 28px",width:"100%",maxWidth:380},
   logo:{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4a847,#e87b4b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:18,color:"#0f0f14",margin:"0 auto 16px"},
   title:{fontSize:22,fontWeight:800,color:"#f0ede6",textAlign:"center",marginBottom:4},
-  sub:{fontSize:13,color:"#666",textAlign:"center",marginBottom:28},
+  sub:{fontSize:13,color:"#666",textAlign:"center",marginBottom:20},
+  tabs:{display:"flex",gap:4,background:"#0f0f14",borderRadius:10,padding:4,marginBottom:20},
+  tab:{flex:1,padding:"8px",border:"none",borderRadius:8,background:"transparent",color:"#666",fontSize:14,cursor:"pointer",fontWeight:500},
+  tabActive:{background:"#1e1e2e",color:"#f0ede6",fontWeight:700},
   label:{fontSize:12,color:"#888",letterSpacing:"0.4px",marginBottom:6,textTransform:"uppercase",display:"block"},
   input:{background:"#0f0f14",border:"1px solid #2a2a38",borderRadius:10,padding:"14px",color:"#f0ede6",fontSize:15,marginBottom:16,outline:"none",width:"100%",boxSizing:"border-box"},
   btn:{background:"linear-gradient(135deg,#d4a847,#e87b4b)",border:"none",borderRadius:12,padding:"15px",color:"#0f0f14",fontWeight:700,fontSize:16,cursor:"pointer",width:"100%"},
-  backBtn:{background:"none",border:"none",color:"#666",fontSize:13,cursor:"pointer",marginTop:12,display:"block",width:"100%",textAlign:"center"},
   errore:{fontSize:13,color:"#e87b4b",marginBottom:12,padding:"10px",background:"#2a1010",borderRadius:8},
-  sentInfo:{fontSize:13,color:"#888",marginBottom:20,padding:"12px",background:"#0e1620",borderRadius:10,lineHeight:1.6,border:"1px solid #1e3050"},
+  infoBox:{fontSize:13,color:"#4BE84B",marginBottom:16,padding:"12px",background:"#0e200e",borderRadius:8,border:"1px solid #2a4a2a",lineHeight:1.5},
 };
 
 // ─── Setup Screen (Supabase credentials) ─────────────────────────────────────
