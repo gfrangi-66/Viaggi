@@ -1,984 +1,573 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="NotaSpese"/>
-  <meta name="theme-color" content="#0f0f14"/>
-  <title>NotaSpese</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#0f0f14;font-family:'DM Sans','Segoe UI',sans-serif;}
-    input,select,button,textarea{font-family:inherit;}
-    select option{background:#17171f;color:#f0ede6;}
-    @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-    #root{padding-bottom:env(safe-area-inset-bottom);}
-  </style>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NotaSpese"/>
+<meta name="theme-color" content="#0f0f14"/>
+<title>NotaSpese</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0f0f14;color:#f0ede6;font-family:'DM Sans','Segoe UI',sans-serif;max-width:480px;margin:0 auto;}
+input,select,button{font-family:inherit;}
+select option{background:#17171f;}
+.page{padding:16px 20px 100px;}
+.hidden{display:none!important;}
+.btn{background:linear-gradient(135deg,#d4a847,#e87b4b);border:none;border-radius:12px;padding:15px;color:#0f0f14;font-weight:700;font-size:16px;cursor:pointer;width:100%;margin-top:8px;display:block;}
+.btn-sm{background:#d4a847;color:#0f0f14;border:none;border-radius:8px;padding:6px 14px;font-weight:700;font-size:13px;cursor:pointer;}
+.btn-out{background:transparent;border:1px solid #2a2a38;border-radius:12px;padding:12px;color:#aaa;font-weight:600;font-size:14px;cursor:pointer;width:100%;margin-top:8px;}
+.inp{background:#17171f;border:1px solid #2a2a38;border-radius:10px;padding:12px 14px;color:#f0ede6;font-size:15px;margin-bottom:18px;outline:none;width:100%;box-sizing:border-box;}
+.lbl{font-size:12px;color:#888;letter-spacing:.4px;margin-bottom:6px;text-transform:uppercase;display:block;}
+.card{background:#17171f;border:1px solid #1e1e28;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.toolbar{display:flex;gap:10px;margin-bottom:10px;}
+.filt{flex:1;background:#1a1a24;border:1px solid #2a2a38;color:#f0ede6;border-radius:10px;padding:8px 12px;font-size:12px;}
+.filt2{flex:1;background:#1a1a24;border:1px solid #2a2a38;color:#f0ede6;border-radius:10px;padding:8px 12px;font-size:13px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:#0f0f14;border-bottom:1px solid #1e1e28;position:sticky;top:0;z-index:10;}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#d4a847,#e87b4b);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0f0f14;}
+.iBtn{background:#1a1a24;border:none;color:#f0ede6;width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;}
+.fab{position:fixed;bottom:28px;right:max(20px,calc(50% - 240px + 20px));width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#d4a847,#e87b4b);border:none;color:#0f0f14;font-size:28px;cursor:pointer;box-shadow:0 4px 20px rgba(212,168,71,.4);z-index:20;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);padding:14px 28px;border-radius:30px;font-size:15px;font-weight:700;color:#fff;z-index:200;box-shadow:0 4px 24px rgba(0,0,0,.6);white-space:nowrap;max-width:90vw;text-align:center;transition:opacity .3s;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:50;padding:0 24px;}
+.overlay.show{display:flex;}
+.modal{background:#17171f;border:1px solid #2a2a38;border-radius:16px;padding:24px;width:100%;max-width:380px;}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.cat-btn{background:#17171f;border:1px solid #2a2a38;border-radius:12px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:#aaa;font-size:11px;font-weight:500;}
+.summ{background:linear-gradient(135deg,#1c1a10,#1a1014);border:1px solid #2e2a1a;border-radius:16px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:6px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;border:1px solid;font-size:12px;font-weight:500;}
+.fhdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.bBtn{background:none;border:none;color:#d4a847;font-size:14px;cursor:pointer;padding:0;}
+.iaBtn{background:#d4a847;border:none;color:#0f0f14;width:36px;height:48px;border-radius:10px;font-size:20px;cursor:pointer;flex-shrink:0;}
+.errBox{background:#2a1010;border:1px solid #c0392b;border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:14px;color:#e87b4b;font-weight:600;}
+.infoBox{background:#1a1a24;border-radius:10px;padding:12px 14px;font-size:12px;color:#888;line-height:1.6;margin-bottom:18px;}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:18px;}
+.fotoArea{background:#17171f;border:2px dashed #2a2a38;border-radius:12px;min-height:80px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:10px;overflow:hidden;}
+.aiBanner{background:#1a1a2e;border:1px solid #4B8BE8;border-radius:10px;padding:10px 14px;font-size:13px;color:#4B8BE8;margin-bottom:10px;}
+.aiBox{background:#0e1e14;border:1px solid #2a4a2e;border-radius:12px;padding:14px;margin-bottom:10px;}
+.aiRow{display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;}
+.clrRow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
+.clrSw{width:32px;height:32px;border-radius:8px;cursor:pointer;}
+.ppills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.ppill{font-size:10px;font-weight:600;border:1px solid;border-radius:10px;padding:2px 8px;}
+.tabs{display:flex;gap:4px;background:#0f0f14;border-radius:10px;padding:4px;margin-bottom:20px;}
+.tab{flex:1;padding:8px;border:none;border-radius:8px;background:transparent;color:#666;font-size:14px;cursor:pointer;}
+.tab.on{background:#1e1e2e;color:#f0ede6;font-weight:700;}
+.mapsBtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#1a3a5a;border:1px solid #4B8BE8;color:#4B8BE8;border-radius:10px;padding:10px;font-weight:700;font-size:13px;margin:12px 0;text-decoration:none;cursor:pointer;}
+.connBar{background:#0e1620;border:1px solid #1e3050;border-radius:10px;padding:12px 14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+.aBtn{background:transparent;border:none;color:#888;cursor:pointer;font-size:14px;padding:2px 6px;}
+details summary{font-size:12px;color:#4B8BE8;cursor:pointer;margin-bottom:8px;padding:4px 0;}
+pre{background:#0a0a10;border-radius:8px;padding:10px;font-size:10px;color:#4BE8C3;overflow:auto;line-height:1.5;white-space:pre-wrap;margin-bottom:16px;}
+</style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useRef,useCallback} = React;
+<div id="scr-load" style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#666;font-size:16px;">Caricamento…</div>
+<div id="scr-setup" class="hidden"></div>
+<div id="scr-login" class="hidden"></div>
+<div id="scr-app" class="hidden">
+  <header>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="logo">NS</div>
+      <div><div style="font-weight:700;font-size:16px;">NotaSpese</div><div id="hdrSub" style="font-size:11px;color:#666;margin-top:1px;">locale</div></div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="iBtn" onclick="openNuova()">＋</button>
+      <button class="iBtn" onclick="goView('clienti')">👥</button>
+      <button class="iBtn" onclick="goView('impostazioni')">⚙</button>
+    </div>
+  </header>
+  <div id="vLista" class="page"></div>
+  <div id="vNuova" class="page hidden"></div>
+  <div id="vClienti" class="page hidden"></div>
+  <div id="vEditC" class="page hidden"></div>
+  <div id="vImpost" class="page hidden"></div>
+  <button class="fab" id="fab" onclick="openNuova()">＋</button>
+</div>
+<div class="overlay" id="modCliente">
+  <div class="modal">
+    <div style="font-size:17px;font-weight:700;margin-bottom:16px;">Nuovo cliente</div>
+    <input class="inp" id="ncNome" placeholder="Nome" onkeydown="if(event.key=='Enter')saveNC()"/>
+    <div class="clrRow" id="ncColors"></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn" style="padding:12px;" onclick="saveNC()">✓ Crea</button>
+      <button class="btn-out" style="margin:0;" onclick="closeModal('modCliente')">Annulla</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="modProgetto">
+  <div class="modal">
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px;">Nuovo progetto</div>
+    <div style="font-size:12px;color:#888;margin-bottom:12px;">Cliente: <span id="npCl"></span></div>
+    <input class="inp" id="npNome" placeholder="Nome progetto" onkeydown="if(event.key=='Enter')saveNP()"/>
+    <div style="display:flex;gap:10px;">
+      <button class="btn" style="padding:12px;" onclick="saveNP()">✓ Crea</button>
+      <button class="btn-out" style="margin:0;" onclick="closeModal('modProgetto')">Annulla</button>
+    </div>
+  </div>
+</div>
+<div class="toast hidden" id="toast"></div>
+<input type="file" id="fileFoto" accept="image/*" capture="environment" style="display:none;" onchange="onFoto(this)"/>
+<script>
 
-// ── Config ──────────────────────────────────────────────────────────────────
-const CATEGORIE = [
-  {id:"km",       label:"Km / Auto",    emoji:"🚗", colore:"#E8B84B"},
-  {id:"pasto",    label:"Pasto",        emoji:"🍽️", colore:"#E87B4B"},
-  {id:"hotel",    label:"Hotel",        emoji:"🏨", colore:"#4B8BE8"},
-  {id:"treno",    label:"Treno / Volo", emoji:"✈️", colore:"#4BE8C3"},
-  {id:"taxi",     label:"Taxi / Uber",  emoji:"🚕", colore:"#C34BE8"},
-  {id:"pedaggi",  label:"Pedaggi",      emoji:"🛣️", colore:"#E8D44B"},
-  {id:"parcheggi",label:"Parcheggi",    emoji:"🅿️", colore:"#4BD4E8"},
-  {id:"altro",    label:"Altro",        emoji:"📎", colore:"#8BE84B"},
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const CAT=[
+  {id:"km",       l:"Km / Auto",    e:"🚗", c:"#E8B84B"},
+  {id:"pasto",    l:"Pasto",        e:"🍽️", c:"#E87B4B"},
+  {id:"hotel",    l:"Hotel",        e:"🏨", c:"#4B8BE8"},
+  {id:"treno",    l:"Treno / Volo", e:"✈️", c:"#4BE8C3"},
+  {id:"taxi",     l:"Taxi / Uber",  e:"🚕", c:"#C34BE8"},
+  {id:"pedaggi",  l:"Pedaggi",      e:"🛣️", c:"#E8D44B"},
+  {id:"parcheggi",l:"Parcheggi",    e:"🅿️", c:"#4BD4E8"},
+  {id:"altro",    l:"Altro",        e:"📎", c:"#8BE84B"},
 ];
-const CLIENT_COLORS = ["#4B8BE8","#E8B84B","#4BE8C3","#C34BE8","#E87B4B","#8BE84B","#E84B7B","#4BE870"];
-const fmt = n => Number(n).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const COLORS=["#4B8BE8","#E8B84B","#4BE8C3","#C34BE8","#E87B4B","#8BE84B","#E84B7B","#4BE870"];
+const fmt=n=>Number(n||0).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD=s=>{if(!s)return"";const p=s.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0].slice(2):s;};
 
-// ── Storage ──────────────────────────────────────────────────────────────────
-const LS_KEY   = "notaspese_v5";
-const LS_CREDS = "notaspese_creds_v2";
-const LS_SB    = "sb_session_v2";
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+const KD="ns_v7",KC="ns_cr_v4",KS="ns_ss_v4";
+const lsG=k=>{try{return JSON.parse(localStorage.getItem(k));}catch{return null;}};
+const lsS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const ckG=k=>{try{const m=document.cookie.match(new RegExp(k+"=([^;]+)"));return m?JSON.parse(decodeURIComponent(m[1])):null;}catch{return null;}};
+const ckS=(k,v,d=365)=>{try{const e=new Date(Date.now()+d*864e5).toUTCString();document.cookie=k+"="+encodeURIComponent(JSON.stringify(v))+";expires="+e+";path=/;SameSite=Lax";}catch{}};
+const ckD=k=>{document.cookie=k+"=;expires=Thu,01 Jan 1970 00:00:00 UTC;path=/;";};
+const defP=()=>({nome:"",piva:"",tariffaKm:0.40,anthropicKey:"",aiProxyUrl:""});
+const defDB=()=>({spese:[],clienti:[],profilo:defP()});
+let DB=lsG(KD)||defDB();
+if(!DB.profilo)DB.profilo=defP();
+const save=()=>lsS(KD,DB);
+const ldCr=()=>lsG(KC)||ckG(KC)||{url:"",anonKey:""};
+const svCr=v=>{lsS(KC,v);ckS(KC,v);};
+const ldSs=()=>lsG(KS)||ckG(KS);
+const svSs=v=>{lsS(KS,v);ckS(KS,v,7);};
+const clSs=()=>{try{localStorage.removeItem(KS);}catch{}ckD(KS);};
 
-const defaultProfilo = () => ({nome:"",piva:"",tariffaKm:0.40,anthropicKey:"",aiProxyUrl:""});
-const defaultData    = () => ({spese:[],clienti:[],profilo:defaultProfilo()});
-
-const lsGet = k => { try{return JSON.parse(localStorage.getItem(k));}catch{return null;} };
-const lsSet = (k,v) => { try{localStorage.setItem(k,JSON.stringify(v));}catch{} };
-const cookieGet = k => { try{const m=document.cookie.match(new RegExp(k+"=([^;]+)"));return m?JSON.parse(decodeURIComponent(m[1])):null;}catch{return null;} };
-const cookieSet = (k,v,days=365) => { try{const e=new Date(Date.now()+days*86400000).toUTCString();document.cookie=k+"="+encodeURIComponent(JSON.stringify(v))+";expires="+e+";path=/;SameSite=Lax";}catch{} };
-
-const loadData  = () => lsGet(LS_KEY) || defaultData();
-const saveData  = d => lsSet(LS_KEY, d);
-const loadCreds = () => lsGet(LS_CREDS) || cookieGet(LS_CREDS) || {url:"",anonKey:""};
-const saveCreds = v => { lsSet(LS_CREDS,v); cookieSet(LS_CREDS,v); };
-const loadSess  = () => lsGet(LS_SB) || cookieGet(LS_SB);
-const saveSess  = v => { lsSet(LS_SB,v); cookieSet(LS_SB,v,7); };
-const clearSess = () => { try{localStorage.removeItem(LS_SB);}catch{} document.cookie=LS_SB+"=;expires=Thu,01 Jan 1970 00:00:00 UTC;path=/;"; };
-
-// ── Supabase ──────────────────────────────────────────────────────────────────
-class SB {
-  constructor(url,key){this.url=url.replace(/\/$/,"");this.key=key;this.token=null;}
-  hdr(x={}){return{"Content-Type":"application/json","apikey":this.key,"Authorization":"Bearer "+(this.token||this.key),...x};}
-  async signUp(email,pw){
-    const r=await fetch(this.url+"/auth/v1/signup",{method:"POST",headers:this.hdr(),body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.msg||d.message||"Errore registrazione");
-    if(!d.access_token) throw new Error("CONFIRM_EMAIL");
-    this.token=d.access_token; return d;
-  }
-  async signIn(email,pw){
-    const r=await fetch(this.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:this.hdr(),body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.msg||d.message||"Email o password non corretti");
-    this.token=d.access_token; return d;
-  }
-  async session(){
-    const s=loadSess(); if(!s) return null;
-    try{
-      if(s.expires_at && Date.now()/1000 > s.expires_at-60){
-        const r=await fetch(this.url+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:this.hdr(),body:JSON.stringify({refresh_token:s.refresh_token})});
-        if(!r.ok){clearSess();return null;}
-        const d=await r.json();
-        this.token=d.access_token;
-        const ns={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};
-        saveSess(ns); return ns;
-      }
-      this.token=s.access_token; return s;
-    }catch{return null;}
-  }
-  saveSession(d){const s={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};saveSess(s);this.token=d.access_token;}
-  logout(){clearSess();this.token=null;}
-  async select(t,q=""){
-    const r=await fetch(this.url+"/rest/v1/"+t+"?"+q+"&order=created_at.desc",{headers:this.hdr({"Prefer":"return=representation"})});
-    if(!r.ok) throw new Error("select "+t+" "+r.status);
-    return r.json();
-  }
-  async upsert(t,row){
-    const r=await fetch(this.url+"/rest/v1/"+t,{method:"POST",headers:this.hdr({"Prefer":"resolution=merge-duplicates,return=representation"}),body:JSON.stringify(row)});
-    if(!r.ok){const e=await r.json();throw new Error(e.message||"upsert "+t+" "+r.status);}
-    return r.json();
-  }
-  async del(t,id){
-    const r=await fetch(this.url+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:this.hdr({"Prefer":"return=minimal"})});
-    if(!r.ok) throw new Error("delete "+t+" "+r.status);
-  }
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+class SB{
+  constructor(u,k){this.url=u.replace(/\/$/,"");this.key=k;this.tok=null;}
+  h(x={}){return{"Content-Type":"application/json","apikey":this.key,"Authorization":"Bearer "+(this.tok||this.key),...x};}
+  async signIn(e,p){const r=await fetch(this.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:this.h(),body:JSON.stringify({email:e,password:p})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.message||"Credenziali non corrette");this.tok=d.access_token;return d;}
+  async signUp(e,p){const r=await fetch(this.url+"/auth/v1/signup",{method:"POST",headers:this.h(),body:JSON.stringify({email:e,password:p})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.message||"Errore registrazione");if(!d.access_token)throw new Error("CONFIRM_EMAIL");this.tok=d.access_token;return d;}
+  async sess(){const s=ldSs();if(!s)return null;try{if(s.expires_at&&Date.now()/1000>s.expires_at-60){const r=await fetch(this.url+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:this.h(),body:JSON.stringify({refresh_token:s.refresh_token})});if(!r.ok){clSs();return null;}const d=await r.json();this.tok=d.access_token;const ns={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};svSs(ns);return ns;}this.tok=s.access_token;return s;}catch{return null;}}
+  svSess(d){const s={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};svSs(s);this.tok=d.access_token;}
+  logout(){clSs();this.tok=null;}
+  async sel(t,q=""){const r=await fetch(this.url+"/rest/v1/"+t+"?"+q+"&order=created_at.desc",{headers:this.h({"Prefer":"return=representation"})});if(!r.ok)throw new Error("sel "+t+" "+r.status);return r.json();}
+  async ups(t,row){const r=await fetch(this.url+"/rest/v1/"+t,{method:"POST",headers:this.h({"Prefer":"resolution=merge-duplicates,return=representation"}),body:JSON.stringify(row)});if(!r.ok){let e={};try{e=await r.json();}catch{}throw new Error(e.message||"ups "+r.status);}return r.json();}
+  async del(t,id){const r=await fetch(this.url+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:this.h({"Prefer":"return=minimal"})});if(!r.ok)throw new Error("del "+r.status);}
 }
+let sb=null;
 
-let sbClient = null;
-const getSB  = () => sbClient;
-const initSB = (url,key) => { sbClient=new SB(url,key); return sbClient; };
-
-// ── AI scontrino ──────────────────────────────────────────────────────────────
-async function analizzaScontrino(base64,mediaType,apiKey,proxyUrl){
-  const url = proxyUrl ? proxyUrl.replace(/\/$/,"") : "https://api.anthropic.com/v1/messages";
-  const res = await fetch(url,{
-    method:"POST",
-    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-    body:JSON.stringify({
-      model:"claude-sonnet-4-20250514", max_tokens:800,
-      system:'Analizza lo scontrino e rispondi SOLO con JSON: {"importo":numero_o_null,"descrizione":"stringa","categoria":"pasto|hotel|treno|taxi|pedaggi|parcheggi|altro","data":"YYYY-MM-DD_o_null","note":"esercente"}',
-      messages:[{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:mediaType,data:base64}},
-        {type:"text",text:"Analizza."}
-      ]}]
-    })
-  });
-  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||"Errore API "+res.status);}
-  const d = await res.json();
-  const txt = (d.content||[]).find(b=>b.type==="text")?.text||"{}";
-  try{const m=txt.replace(/```json|```/g,"").trim().match(/\{[\s\S]*\}/);return m?JSON.parse(m[0]):{};}
-  catch{return {};}
+// ── AI ────────────────────────────────────────────────────────────────────────
+async function aiScan(b64,mime,key,proxy){
+  const url=proxy?proxy.replace(/\/$/,""):"https://api.anthropic.com/v1/messages";
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:'Analizza scontrino. Rispondi SOLO con JSON: {"importo":numero_o_null,"descrizione":"stringa","categoria":"pasto|hotel|treno|taxi|pedaggi|parcheggi|altro","data":"YYYY-MM-DD_o_null","note":"esercente"}',messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:mime,data:b64}},{type:"text",text:"Analizza."}]}]})});
+  if(!r.ok){let e={};try{e=await r.json();}catch{}throw new Error(e.error?.message||"Errore AI "+r.status);}
+  const d=await r.json();
+  const t=(d.content||[]).find(b=>b.type==="text")?.text||"{}";
+  try{const m=t.replace(/```json|```/g,"").trim().match(/\{[\s\S]*\}/);return m?JSON.parse(m[0]):{};}catch{return{};}
 }
 
 // ── PDF ───────────────────────────────────────────────────────────────────────
-function esportaPDF(spese,profilo,clienteNome,progetto,periodo,tariffaKm,clientiMap){
-  if(!window.jspdf){alert("Libreria PDF non caricata.");return;}
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({unit:"mm",format:"a4"});
-  const W=210,M=14;
-  const multiCliente = !clienteNome || clienteNome==="Tutti i clienti";
-
-  // Header
-  doc.setFillColor(15,15,20); doc.rect(0,0,W,44,"F");
-  doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont("helvetica","bold");
-  doc.text("NOTA SPESE",M,13);
-  doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(200,200,200);
-  doc.text(profilo.nome||"—",M,21);
-  doc.text("P.IVA: "+(profilo.piva||"—"),M,27);
-  if(clienteNome && !multiCliente){
-    doc.setTextColor(212,168,71); doc.setFont("helvetica","bold");
-    doc.text("Cliente: "+clienteNome,M,35);
-  }
-  if(progetto){
-    doc.setTextColor(100,220,160); doc.setFont("helvetica","bold");
-    doc.text("Progetto: "+progetto, multiCliente?M:M+80, 35);
-  }
-  doc.setTextColor(212,168,71); doc.setFont("helvetica","bold"); doc.setFontSize(9);
-  doc.text("Periodo: "+periodo,W-M,21,{align:"right"});
-  doc.setTextColor(130,130,130); doc.setFont("helvetica","normal"); doc.setFontSize(8);
-  doc.text("Generata il "+new Date().toLocaleDateString("it-IT"),W-M,28,{align:"right"});
-  doc.text(spese.length+" spese",W-M,34,{align:"right"});
-
-  // Colonne
-  let y=54;
-  const cols = multiCliente
-    ? [14,26,52,86,120,153,178]
-    : [14,26,60,104,138,162,185];
-  const headers = multiCliente
-    ? ["Data","Cat.","Cliente","Progetto","Descrizione","Km","Importo"]
-    : ["Data","Cat.","Progetto","Descrizione","Note/Percorso","Km","Importo"];
-
-  doc.setFillColor(235,233,225); doc.rect(M-2,y-5,W-2*M+4,8,"F");
-  doc.setTextColor(30,30,30); doc.setFontSize(7.5); doc.setFont("helvetica","bold");
-  headers.forEach((h,i)=>doc.text(h,cols[i],y));
-
-  doc.setFont("helvetica","normal"); let totale=0;
-  spese.forEach((s,idx)=>{
-    y+=8; if(y>268){doc.addPage();y=16;}
-    if(idx%2===0){doc.setFillColor(250,249,246);doc.rect(M-2,y-5,W-2*M+4,8,"F");}
-    const cat=CATEGORIE.find(c=>c.id===s.categoria);
-    const imp=s.categoria==="km"?(parseFloat(s.km)||0)*tariffaKm:parseFloat(s.importo||0);
-    totale+=imp;
-    // Formato data GG/MM/AA
-    const dp=(s.data||"").split("-");
-    const dataFmt=dp.length===3?dp[2]+"/"+dp[1]+"/"+dp[0].slice(2):s.data||"";
-    doc.setTextColor(70,70,70); doc.setFontSize(7.5);
-    doc.text(dataFmt,cols[0],y);
-    doc.text(cat?cat.label.substring(0,8):s.categoria,cols[1],y);
-    if(multiCliente){
-      doc.text(((clientiMap&&clientiMap[s.clienteId])||"").substring(0,16),cols[2],y);
-      doc.text((s.progetto||"").substring(0,16),cols[3],y);
-      doc.text(doc.splitTextToSize(s.descrizione||"",32)[0]||"",cols[4],y);
-    } else {
-      doc.text((s.progetto||"").substring(0,18),cols[2],y);
-      doc.text(doc.splitTextToSize(s.descrizione||"",36)[0]||"",cols[3],y);
-      const ext=s.categoria==="km"&&s.partenza?s.partenza.split(",")[0]+"→"+(s.arrivo||"").split(",")[0]:(s.note||"").substring(0,22);
-      doc.text(ext.substring(0,24),cols[4],y);
-    }
-    doc.setTextColor(40,40,40); doc.setFont("helvetica","bold");
-    if(s.categoria==="km") doc.text(String(s.km||0)+" km",cols[5],y);
-    doc.text("€ "+fmt(imp),cols[6]+14,y,{align:"right"});
-    doc.setFont("helvetica","normal");
+function ldPDF(cb){if(window.jspdf){cb();return;}const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";s.onload=cb;document.head.appendChild(s);}
+function doPDF(){
+  const tk=parseFloat(DB.profilo.tariffaKm)||0.40;
+  const sp=getFiltered();
+  const cNome=ST.fC!=="tutti"?nmC(ST.fC):"Tutti i clienti";
+  const prog=ST.fP!=="tutti"?ST.fP:"";
+  const multi=cNome==="Tutti i clienti";
+  const cMap=Object.fromEntries(DB.clienti.map(c=>[c.id,c.nome]));
+  ldPDF(()=>{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:"mm",format:"a4"});
+    const W=210,M=14;
+    doc.setFillColor(15,15,20);doc.rect(0,0,W,44,"F");
+    doc.setTextColor(255,255,255);doc.setFontSize(18);doc.setFont("helvetica","bold");doc.text("NOTA SPESE",M,13);
+    doc.setFontSize(9);doc.setFont("helvetica","normal");doc.setTextColor(200,200,200);
+    doc.text(DB.profilo.nome||"—",M,21);doc.text("P.IVA: "+(DB.profilo.piva||"—"),M,27);
+    if(!multi){doc.setTextColor(212,168,71);doc.setFont("helvetica","bold");doc.text("Cliente: "+cNome,M,35);}
+    if(prog){doc.setTextColor(100,220,160);doc.setFont("helvetica","bold");doc.text("Progetto: "+prog,(multi?M:M+80),35);}
+    doc.setTextColor(212,168,71);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("Periodo: "+ST.periodo,W-M,21,{align:"right"});
+    doc.setTextColor(130,130,130);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Generata il "+new Date().toLocaleDateString("it-IT"),W-M,28,{align:"right"});
+    doc.text(sp.length+" spese",W-M,34,{align:"right"});
+    let y=54;
+    const cols=multi?[14,26,52,86,120,153,178]:[14,26,60,104,138,162,185];
+    const hdrs=multi?["Data","Cat.","Cliente","Progetto","Descrizione","Km","Importo"]:["Data","Cat.","Progetto","Descrizione","Note/Percorso","Km","Importo"];
+    doc.setFillColor(235,233,225);doc.rect(M-2,y-5,W-2*M+4,8,"F");
+    doc.setTextColor(30,30,30);doc.setFontSize(7.5);doc.setFont("helvetica","bold");
+    hdrs.forEach((h,i)=>doc.text(h,cols[i],y));
+    doc.setFont("helvetica","normal");let tot=0;
+    sp.forEach((s,idx)=>{
+      y+=8;if(y>268){doc.addPage();y=16;}
+      if(idx%2===0){doc.setFillColor(250,249,246);doc.rect(M-2,y-5,W-2*M+4,8,"F");}
+      const cat=CAT.find(c=>c.id===s.categoria);
+      const imp=s.categoria==="km"?(parseFloat(s.km)||0)*tk:parseFloat(s.importo||0);
+      tot+=imp;
+      const dp=(s.data||"").split("-");
+      const df=dp.length===3?dp[2]+"/"+dp[1]+"/"+dp[0].slice(2):s.data||"";
+      doc.setTextColor(70,70,70);doc.setFontSize(7.5);
+      doc.text(df,cols[0],y);
+      doc.text(cat?cat.l.substring(0,8):s.categoria,cols[1],y);
+      if(multi){doc.text(((cMap[s.clienteId])||"").substring(0,16),cols[2],y);doc.text((s.progetto||"").substring(0,16),cols[3],y);doc.text(doc.splitTextToSize(s.descrizione||"",32)[0]||"",cols[4],y);}
+      else{doc.text((s.progetto||"").substring(0,18),cols[2],y);doc.text(doc.splitTextToSize(s.descrizione||"",36)[0]||"",cols[3],y);const ex=s.categoria==="km"&&s.partenza?(s.partenza.split(",")[0]+"→"+(s.arrivo||"").split(",")[0]):(s.note||"").substring(0,22);doc.text(ex.substring(0,24),cols[4],y);}
+      doc.setTextColor(40,40,40);doc.setFont("helvetica","bold");
+      if(s.categoria==="km")doc.text(String(s.km||0)+" km",cols[5],y);
+      doc.text("€ "+fmt(imp),cols[6]+14,y,{align:"right"});
+      doc.setFont("helvetica","normal");
+    });
+    y+=12;doc.setFillColor(15,15,20);doc.rect(M-2,y-6,W-2*M+4,11,"F");
+    doc.setTextColor(220,180,80);doc.setFont("helvetica","bold");doc.setFontSize(10);
+    doc.text("TOTALE RIMBORSO RICHIESTO",M,y);doc.text("€ "+fmt(tot),W-M,y,{align:"right"});
+    doc.save("nota-spese-"+[cNome,prog,ST.periodo].filter(Boolean).join("-").replace(/\s+/g,"-")+".pdf");
   });
-
-  y+=12;
-  doc.setFillColor(15,15,20); doc.rect(M-2,y-6,W-2*M+4,11,"F");
-  doc.setTextColor(220,180,80); doc.setFont("helvetica","bold"); doc.setFontSize(10);
-  doc.text("TOTALE RIMBORSO RICHIESTO",M,y);
-  doc.text("€ "+fmt(totale),W-M,y,{align:"right"});
-  const slug=[clienteNome,progetto,periodo].filter(Boolean).join("-").replace(/\s+/g,"-");
-  doc.save("nota-spese-"+slug+".pdf");
 }
-const loadJsPDF=cb=>{if(window.jspdf){cb();return;}const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";s.onload=cb;document.head.appendChild(s);};
 
-// ── Google Maps helper ────────────────────────────────────────────────────────
-const mapsUrl=(p,a)=>"https://www.google.com/maps/dir/"+encodeURIComponent(p)+"/"+encodeURIComponent(a);
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const ST={
+  view:"lista",
+  periodo:(()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")})(),
+  fC:"tutti",fP:"tutti",fCat:"tutti",
+  form:{},editSId:null,editCId:null,
+  aiSug:null,foto:null,fotoMime:"image/jpeg",
+  ncColor:COLORS[0],ecColor:COLORS[0],utente:null,
+};
+const nmC=id=>(DB.clienti.find(c=>c.id===id)||{}).nome||"";
+const clC=id=>(DB.clienti.find(c=>c.id===id)||{}).colore||"#888";
+const prjC=cid=>cid?[...new Set(DB.spese.filter(s=>s.clienteId===cid).map(s=>s.progetto).filter(Boolean))]:[];
+const tk=()=>parseFloat(DB.profilo.tariffaKm)||0.40;
+function getFiltered(){return DB.spese.filter(s=>{if(!s.data||!s.data.startsWith(ST.periodo))return false;if(ST.fC!=="tutti"&&s.clienteId!==ST.fC)return false;if(ST.fP!=="tutti"&&s.progetto!==ST.fP)return false;if(ST.fCat!=="tutti"&&s.categoria!==ST.fCat)return false;return true;}).sort((a,b)=>(b.data||"").localeCompare(a.data||""));}
 
-// ── KmCalcolatore ─────────────────────────────────────────────────────────────
-function KmCalcolatore({onKmCalcolato,partenzaInit,arrivoInit,tariffaKm}){
-  const [p,setP]=useState(partenzaInit||"");
-  const [a,setA]=useState(arrivoInit||"");
-  const [km,setKm]=useState("");
-  const [open,setOpen]=useState(false);
-  const url=p&&a?mapsUrl(p,a):null;
-  const applica=()=>{const v=parseFloat(km.replace(",","."));if(!v||v<=0)return;onKmCalcolato(v,p,a);setKm("");setOpen(false);};
-  return(
-    <div style={{background:"#0e1620",border:"1px solid #1e3050",borderRadius:14,padding:"14px 16px",marginBottom:18}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}} onClick={()=>setOpen(o=>!o)}>
-        <div style={{display:"flex",alignItems:"center",gap:8,fontSize:13,fontWeight:700,color:"#4B8BE8"}}>🗺 Calcola percorso con Google Maps</div>
-        <div style={{fontSize:12,color:"#4B8BE8"}}>{open?"▲":"▼"}</div>
-      </div>
-      {open&&(
-        <div style={{marginTop:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
-            <div style={{width:12,height:12,borderRadius:"50%",background:"#4B8BE8",flexShrink:0}}/>
-            <input style={KC.inp} placeholder="Partenza" value={p} onChange={e=>setP(e.target.value)}/>
-          </div>
-          <div style={{width:2,height:12,background:"#2a3a4a",marginLeft:5,marginBottom:4}}/>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-            <div style={{width:12,height:12,borderRadius:"50%",background:"#E87B4B",flexShrink:0}}/>
-            <input style={KC.inp} placeholder="Arrivo" value={a} onChange={e=>setA(e.target.value)}/>
-          </div>
-          <a href={url||"#"} target="_blank" rel="noopener noreferrer"
-            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#1a3a5a",border:"1px solid #4B8BE8",color:"#4B8BE8",borderRadius:10,padding:"10px",fontWeight:700,fontSize:13,marginBottom:10,textDecoration:"none",opacity:url?1:0.4,pointerEvents:url?"auto":"none"}}>
-            📍 Apri in Google Maps
-          </a>
-          <div style={{fontSize:11,color:"#555",textAlign:"center",marginBottom:8}}>Leggi i km da Maps e inseriscili qui</div>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <input type="number" min="0" step="0.1" placeholder="es. 142" value={km} onChange={e=>setKm(e.target.value)} onKeyDown={e=>e.key==="Enter"&&applica()} style={{...KC.inp,flex:1,marginBottom:0}}/>
-            <span style={{color:"#888",fontSize:13}}>km</span>
-            <button style={{background:"#4BE84B",color:"#0f0f14",border:"none",borderRadius:8,padding:"10px 16px",fontWeight:700,fontSize:13,cursor:"pointer",opacity:km?1:0.4}} disabled={!km} onClick={applica}>✓ Usa</button>
-          </div>
-          {km>0&&<div style={{fontSize:12,color:"#d4a847",marginTop:6}}>= € {fmt(parseFloat(km.replace(",","."))*tariffaKm)} <span style={{opacity:0.5}}>({tariffaKm}€/km)</span></div>}
-        </div>
-      )}
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let TT=null;
+function toast(msg,err=false){const el=document.getElementById("toast");if(!el)return;el.textContent=msg;el.style.background=err?"#c0392b":"#1a6b3c";el.classList.remove("hidden");if(TT)clearTimeout(TT);TT=setTimeout(()=>el.classList.add("hidden"),3000);}
+
+// ── VIEW ──────────────────────────────────────────────────────────────────────
+function goView(v){
+  ["Lista","Nuova","Clienti","EditC","Impost"].forEach(n=>{const el=document.getElementById("v"+n);if(el)el.classList.toggle("hidden",n.toLowerCase()!==v.toLowerCase()&&!(v==="lista"&&n==="Lista")&&!(v==="nuova"&&n==="Nuova")&&!(v==="clienti"&&n==="Clienti")&&!(v==="editCliente"&&n==="EditC")&&!(v==="impostazioni"&&n==="Impost"));});
+  const fab=document.getElementById("fab");if(fab)fab.classList.toggle("hidden",v!=="lista");
+  ST.view=v;
+  if(v==="clienti")renderClienti();
+  if(v==="impostazioni")renderImpost();
+}
+function showOnly(v){
+  const map={lista:"vLista",nuova:"vNuova",clienti:"vClienti",editCliente:"vEditC",impostazioni:"vImpost"};
+  Object.values(map).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
+  const target=document.getElementById(map[v]);if(target)target.classList.remove("hidden");
+  const fab=document.getElementById("fab");if(fab)fab.classList.toggle("hidden",v!=="lista");
+  ST.view=v;
+}
+function closeModal(id){document.getElementById(id).classList.remove("show");}
+
+// ── SYNC ──────────────────────────────────────────────────────────────────────
+function setSyncUI(st){const el=document.getElementById("hdrSub");if(!el)return;const u=ST.utente;const dot=st==="syncing"?"🔄":st==="ok"?"☁":"⚠";const col=st==="err"?"#e87b4b":st==="ok"?"#4BE84B":"#888";if(u)el.innerHTML='<span style="color:'+col+'">'+dot+' '+(u.email||"").split("@")[0]+"</span>";else el.textContent="locale";}
+async function ldCloud(){if(!sb||!ST.utente)return;setSyncUI("syncing");try{const s=await sb.sess();if(!s)return;const uid=s.user?.id||s.sub||s.user_id;const[sp,cl,pr]=await Promise.all([sb.sel("spese","user_id=eq."+uid),sb.sel("clienti","user_id=eq."+uid),sb.sel("profilo","user_id=eq."+uid)]);const p=pr[0]||{};const lp=lsG(KD)?.profilo||{};DB.profilo={nome:p.nome||"",piva:p.piva||"",tariffaKm:p.tariffa_km||0.40,anthropicKey:lp.anthropicKey||"",aiProxyUrl:lp.aiProxyUrl||""};DB.spese=sp.map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));DB.clienti=cl.map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));save();setSyncUI("ok");renderLista();}catch(e){setSyncUI("err");toast("Sync: "+e.message,true);}}
+async function syncSp(sp){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;setSyncUI("syncing");try{await sb.ups("spese",{id:String(sp.id),user_id:uid,data:sp.data,categoria:sp.categoria,importo:sp.importo?parseFloat(sp.importo):null,km:sp.km?parseFloat(sp.km):null,partenza:sp.partenza||null,arrivo:sp.arrivo||null,descrizione:sp.descrizione,note:sp.note||null,foto:sp.foto||null,foto_media_type:sp.fotoMime||null,cliente_id:sp.clienteId||null,progetto:sp.progetto||null});setSyncUI("ok");}catch(e){setSyncUI("err");toast("Cloud: "+e.message,true);}}
+async function syncDSp(id){if(!sb||!ST.utente)return;try{await sb.del("spese",id);}catch{}}
+async function syncCl(c){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;try{await sb.ups("clienti",{id:String(c.id),user_id:uid,nome:c.nome,piva:c.piva||null,email:c.email||null,colore:c.colore});}catch{}}
+async function syncDCl(id){if(!sb||!ST.utente)return;try{await sb.del("clienti",id);}catch{}}
+async function syncProf(p){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;try{await sb.ups("profilo",{id:uid,user_id:uid,nome:p.nome,piva:p.piva,tariffa_km:parseFloat(p.tariffaKm)||0.40});}catch{}}
+
+// ── RENDER LISTA ──────────────────────────────────────────────────────────────
+function renderLista(){
+  const sp=getFiltered(),t=tk();
+  const tot=sp.reduce((a,s)=>a+(s.categoria==="km"?(parseFloat(s.km)||0)*t:parseFloat(s.importo||0)),0);
+  const pf=ST.fC!=="tutti"?prjC(ST.fC):[...new Set(DB.spese.map(s=>s.progetto).filter(Boolean))];
+  let h=`<div class="toolbar">
+    <input type="month" value="${ST.periodo}" class="filt2" style="flex:1;" onchange="ST.periodo=this.value;renderLista();">
+    <select class="filt" onchange="ST.fCat=this.value;renderLista();">
+      <option value="tutti"${ST.fCat==="tutti"?" selected":""}>Tutte</option>
+      ${CAT.map(c=>`<option value="${c.id}"${ST.fCat===c.id?" selected":""}>${c.e} ${c.l}</option>`).join("")}
+    </select></div>
+  <div class="toolbar">
+    <select class="filt" onchange="ST.fC=this.value;ST.fP='tutti';renderLista();">
+      <option value="tutti"${ST.fC==="tutti"?" selected":""}>Tutti i clienti</option>
+      ${DB.clienti.map(c=>`<option value="${c.id}"${ST.fC===c.id?" selected":""}>${c.nome}</option>`).join("")}
+    </select>
+    <select class="filt"${pf.length===0?" disabled":""} onchange="ST.fP=this.value;renderLista();">
+      <option value="tutti"${ST.fP==="tutti"?" selected":""}>Tutti i progetti</option>
+      ${pf.map(p=>`<option value="${p}"${ST.fP===p?" selected":""}>${p}</option>`).join("")}
+    </select></div>
+  <div class="summ">
+    <div><div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Totale periodo</div>
+    <div style="font-size:26px;font-weight:800;color:#d4a847;letter-spacing:-1px;">€ ${fmt(tot)}</div>
+    ${ST.fC!=="tutti"?`<div style="font-size:11px;color:${clC(ST.fC)};margin-top:2px;">${nmC(ST.fC)}${ST.fP!=="tutti"?" · "+ST.fP:""}</div>`:""}
     </div>
-  );
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <div style="font-size:12px;color:#888;">${sp.length} spese</div>
+      <button class="btn-sm" onclick="doPDF()">⬇ PDF</button>
+    </div></div>`;
+  const chips=CAT.map(c=>{const ct=sp.filter(s=>s.categoria===c.id).reduce((a,s)=>a+(s.categoria==="km"?(parseFloat(s.km)||0)*t:parseFloat(s.importo||0)),0);return ct===0?"":'<div class="chip" style="background:'+c.c+'22;border-color:'+c.c+';">'+c.e+' <span style="color:'+c.c+';font-weight:600;">€ '+fmt(ct)+"</span></div>";}).join("");
+  if(chips)h+=`<div class="chips">${chips}</div>`;
+  if(sp.length===0){h+=`<div style="text-align:center;padding-top:60px;"><div style="font-size:48px;margin-bottom:12px;">🧾</div><div style="color:#666;font-size:15px;margin-bottom:20px;">Nessuna spesa nel periodo</div><button class="btn" style="max-width:220px;margin:0 auto;" onclick="openNuova()">+ Aggiungi spesa</button></div>`;}
+  else{sp.forEach(s=>{const cat=CAT.find(x=>x.id===s.categoria);const imp=s.categoria==="km"?(parseFloat(s.km)||0)*t:parseFloat(s.importo||0);const cc=clC(s.clienteId);const ds=new Date(s.data+"T12:00:00").toLocaleDateString("it-IT",{day:"2-digit",month:"short"});h+=`<div class="card"><div style="width:40px;height:40px;border-radius:12px;background:${cat?cat.c:"#aaa"};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${cat?cat.e:"?"}</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:14px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.descrizione||""}</div><div style="font-size:11px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ds}${s.clienteId?`<span style="color:${cc};font-weight:600;"> · ${nmC(s.clienteId)}</span>`:""}${s.progetto?`<span style="color:#888;"> · ${s.progetto}</span>`:""}${s.categoria==="km"?`<span style="color:#888;"> ${s.km}km</span>`:""}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><div style="font-weight:700;font-size:15px;color:#d4a847;">€ ${fmt(imp)}</div><div style="display:flex;align-items:center;gap:4px;">${s.foto?"<span>📷</span>":""}<button class="aBtn" onclick="openNuova('${s.id}')">✏</button><button class="aBtn" style="color:#c0392b;" onclick="delSp('${s.id}')">✕</button></div></div></div>`;});}
+  const el=document.getElementById("vLista");if(el)el.innerHTML=h;
 }
-const KC={inp:{background:"#17171f",border:"1px solid #2a2a38",borderRadius:8,padding:"10px 12px",color:"#f0ede6",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box"}};
 
-// ── Login ─────────────────────────────────────────────────────────────────────
-function LoginScreen({onLogin}){
-  const [email,setEmail]=useState("");
-  const [pw,setPw]=useState("");
-  const [tab,setTab]=useState("accedi");
-  const [loading,setLoading]=useState(false);
-  const [err,setErr]=useState("");
-  const [info,setInfo]=useState("");
-  const go=async()=>{
-    if(!email.trim()||!pw.trim()){setErr("Inserisci email e password");return;}
-    if(tab==="registrati"&&pw.length<6){setErr("Password minimo 6 caratteri");return;}
-    setLoading(true);setErr("");setInfo("");
-    try{
-      const d=tab==="accedi"?await getSB().signIn(email.trim(),pw.trim()):await getSB().signUp(email.trim(),pw.trim());
-      getSB().saveSession(d);onLogin(d.user);
-    }catch(e){
-      if(e.message==="CONFIRM_EMAIL"){setInfo("Controlla la tua email per confermare, poi accedi.");setTab("accedi");}
-      else setErr(e.message);
-    }finally{setLoading(false);}
-  };
-  return(
-    <div style={{minHeight:"100vh",background:"#0f0f14",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:"#17171f",border:"1px solid #2a2a38",borderRadius:20,padding:"32px 28px",width:"100%",maxWidth:380}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4a847,#e87b4b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:18,color:"#0f0f14",margin:"0 auto 16px"}}>NS</div>
-        <div style={{fontSize:22,fontWeight:800,color:"#f0ede6",textAlign:"center",marginBottom:4}}>NotaSpese</div>
-        <div style={{fontSize:13,color:"#666",textAlign:"center",marginBottom:20}}>{tab==="accedi"?"Accedi al tuo account":"Crea un account"}</div>
-        <div style={{display:"flex",gap:4,background:"#0f0f14",borderRadius:10,padding:4,marginBottom:20}}>
-          {["accedi","registrati"].map(t=>(
-            <button key={t} onClick={()=>{setTab(t);setErr("");setInfo("");}}
-              style={{flex:1,padding:"8px",border:"none",borderRadius:8,background:tab===t?"#1e1e2e":"transparent",color:tab===t?"#f0ede6":"#666",fontSize:14,cursor:"pointer",fontWeight:tab===t?700:500}}>
-              {t==="accedi"?"Accedi":"Registrati"}
-            </button>
-          ))}
-        </div>
-        {info&&<div style={{fontSize:13,color:"#4BE84B",marginBottom:12,padding:"10px",background:"#0e200e",borderRadius:8,border:"1px solid #2a4a2a"}}>{info}</div>}
-        <label style={{fontSize:12,color:"#888",display:"block",marginBottom:6,textTransform:"uppercase"}}>Email</label>
-        <input type="email" placeholder="gianni@esempio.it" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}
-          style={{background:"#0f0f14",border:"1px solid #2a2a38",borderRadius:10,padding:14,color:"#f0ede6",fontSize:15,marginBottom:16,outline:"none",width:"100%",boxSizing:"border-box"}} autoFocus/>
-        <label style={{fontSize:12,color:"#888",display:"block",marginBottom:6,textTransform:"uppercase"}}>Password</label>
-        <input type="password" placeholder={tab==="registrati"?"Minimo 6 caratteri":"La tua password"} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}
-          style={{background:"#0f0f14",border:"1px solid #2a2a38",borderRadius:10,padding:14,color:"#f0ede6",fontSize:15,marginBottom:16,outline:"none",width:"100%",boxSizing:"border-box"}}/>
-        {err&&<div style={{fontSize:13,color:"#e87b4b",marginBottom:12,padding:"10px",background:"#2a1010",borderRadius:8}}>{err}</div>}
-        <button onClick={go} disabled={loading}
-          style={{background:"linear-gradient(135deg,#d4a847,#e87b4b)",border:"none",borderRadius:12,padding:15,color:"#0f0f14",fontWeight:700,fontSize:16,cursor:"pointer",width:"100%"}}>
-          {loading?"…":tab==="accedi"?"→ Accedi":"✓ Crea account"}
-        </button>
-      </div>
+// ── RENDER NUOVA ──────────────────────────────────────────────────────────────
+function openNuova(id){
+  ST.editSId=id||null;ST.aiSug=null;
+  if(id){const s=DB.spese.find(x=>x.id===id);if(!s)return;ST.form={...s};ST.foto=s.foto||null;ST.fotoMime=s.fotoMime||"image/jpeg";}
+  else{ST.form={categoria:"pasto",data:new Date().toISOString().slice(0,10),importo:"",km:"",partenza:"",arrivo:"",descrizione:"",note:"",clienteId:"",progetto:""};ST.foto=null;ST.fotoMime="image/jpeg";}
+  renderNuova();showOnly("nuova");
+}
+function renderNuova(){
+  const f=ST.form,pf=f.clienteId?prjC(f.clienteId):[],t=tk();
+  let h=`<div class="fhdr"><button class="bBtn" onclick="showOnly('lista');renderLista();">← Indietro</button><h2 style="font-size:18px;font-weight:700;margin:0;">${ST.editSId?"Modifica spesa":"Nuova spesa"}</h2></div>
+  <div style="margin-bottom:20px;">
+    <div class="fotoArea" onclick="document.getElementById('fileFoto').click();">
+      ${ST.foto?`<img src="${ST.foto}" style="width:100%;max-height:220px;object-fit:cover;">`:`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#555;padding:16px 0;font-size:13px;"><span style="font-size:28px;">📷</span>Fotografa lo scontrino<span style="font-size:11px;color:#444;">L'AI compilerà i campi</span></div>`}
     </div>
-  );
+    <div id="aiLoad" class="aiBanner hidden">⟳ Analisi AI in corso…</div>
+    <div id="aiBox" class="aiBox hidden"><div style="color:#4BE870;font-weight:700;font-size:13px;margin-bottom:10px;">✨ L'AI ha letto lo scontrino</div><div id="aiRows"></div><div style="display:flex;gap:8px;margin-top:10px;"><button class="btn" style="padding:10px;font-size:13px;" onclick="applyAI()">✓ Applica</button><button class="btn-out" style="margin:0;padding:10px;" onclick="document.getElementById('aiBox').classList.add('hidden')">Ignora</button></div></div>
+    ${ST.foto?`<button style="background:none;border:none;color:#c0392b;font-size:12px;cursor:pointer;padding:0 0 4px;" onclick="rmFoto()">✕ Rimuovi foto</button>`:""}
+  </div>
+  <div class="cat-grid">${CAT.map(c=>`<button class="cat-btn" style="${f.categoria===c.id?"background:"+c.c+"33;border-color:"+c.c+";color:"+c.c+";":""}" onclick="setCat('${c.id}')"><span style="font-size:22px;">${c.e}</span>${c.l}</button>`).join("")}</div>
+  <label class="lbl">Data</label><input class="inp" type="date" value="${f.data||""}" onchange="ST.form.data=this.value;">
+  <label class="lbl">Descrizione *</label><input class="inp" type="text" id="iDesc" placeholder="es. Pranzo con cliente" value="${esc(f.descrizione||"")}" oninput="ST.form.descrizione=this.value;">
+  <label class="lbl">Cliente</label>
+  <div class="row"><div style="flex:1;"><select class="inp" style="margin-bottom:0;width:100%;" onchange="ST.form.clienteId=this.value;ST.form.progetto='';renderNuova();"><option value="">— Nessun cliente —</option>${DB.clienti.map(c=>`<option value="${c.id}"${f.clienteId===c.id?" selected":""}>${c.nome}</option>`).join("")}</select></div><button class="iaBtn" onclick="openMC()">＋</button></div>
+  <label class="lbl">Progetto</label>
+  <div class="row"><div style="flex:1;"><input class="inp" type="text" id="iProg" list="spj" style="margin-bottom:0;" ${!f.clienteId?'disabled style="opacity:.4;"':""} placeholder="${f.clienteId?"Scegli o digita":"Seleziona prima un cliente"}" value="${esc(f.progetto||"")}" oninput="ST.form.progetto=this.value;"><datalist id="spj">${pf.map(p=>`<option value="${p}">`).join("")}</datalist></div><button class="iaBtn" ${!f.clienteId?'disabled style="opacity:.35;"':""} onclick="openMP()">＋</button></div>`;
+  if(f.categoria==="km"){
+    h+=`<div style="background:#0e1620;border:1px solid #1e3050;border-radius:14px;padding:14px 16px;margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="tgMaps()">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#4B8BE8;">🗺 Calcola con Google Maps</div>
+        <div style="font-size:12px;color:#4B8BE8;" id="mArrow">▼</div></div>
+      <div id="mBody" style="display:none;margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;"><div style="width:12px;height:12px;border-radius:50%;background:#4B8BE8;flex-shrink:0;"></div><input style="background:#17171f;border:1px solid #2a2a38;border-radius:8px;padding:10px 12px;color:#f0ede6;font-size:13px;outline:none;width:100%;box-sizing:border-box;" placeholder="Partenza" id="mP" value="${esc(f.partenza||"")}"></div>
+        <div style="width:2px;height:12px;background:#2a3a4a;margin-left:5px;margin-bottom:4px;"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><div style="width:12px;height:12px;border-radius:50%;background:#E87B4B;flex-shrink:0;"></div><input style="background:#17171f;border:1px solid #2a2a38;border-radius:8px;padding:10px 12px;color:#f0ede6;font-size:13px;outline:none;width:100%;box-sizing:border-box;" placeholder="Arrivo" id="mA" value="${esc(f.arrivo||"")}"></div>
+        <a id="mLink" href="#" target="_blank" rel="noopener noreferrer" class="mapsBtn" onclick="updML()">📍 Apri in Google Maps</a>
+        <div style="font-size:11px;color:#555;text-align:center;margin-bottom:8px;">Leggi i km da Maps, inseriscili qui</div>
+        <div class="row"><input type="number" min="0" step="0.1" placeholder="es. 142" id="mKm" style="background:#17171f;border:1px solid #2a2a38;border-radius:8px;padding:10px 12px;color:#f0ede6;font-size:13px;outline:none;flex:1;box-sizing:border-box;" oninput="updKC()"><span style="color:#888;font-size:13px;">km</span><button style="background:#4BE84B;color:#0f0f14;border:none;border-radius:8px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;" onclick="useMKm()">✓ Usa</button></div>
+        <div id="mCalc" style="font-size:12px;color:#d4a847;margin-top:6px;display:none;"></div>
+      </div></div>
+    <label class="lbl">Km percorsi *</label>
+    <div class="row"><input class="inp" type="number" min="0" step="0.1" id="iKm" placeholder="0" value="${f.km||""}" oninput="ST.form.km=this.value;updKP();" style="flex:1;margin-bottom:0;"><div style="font-size:13px;color:#d4a847;font-weight:600;white-space:nowrap;" id="kPrev">= € ${fmt((parseFloat(f.km)||0)*t)} <span style="opacity:.5;font-size:11px;">(${t}€/km)</span></div></div>`;
+  }else{h+=`<label class="lbl">Importo (€) *</label><input class="inp" type="number" min="0" step="0.01" id="iImp" placeholder="0.00" value="${f.importo||""}" oninput="ST.form.importo=this.value;">`;}
+  h+=`<label class="lbl">Note</label><input class="inp" type="text" id="iNote" placeholder="Note aggiuntive" value="${esc(f.note||"")}" oninput="ST.form.note=this.value;">
+  <div id="fErr" class="errBox hidden"></div>
+  <button class="btn" onclick="salva()">${ST.editSId?"💾 Aggiorna spesa":"✓ Salva spesa"}</button>`;
+  const el=document.getElementById("vNuova");if(el)el.innerHTML=h;
+}
+const esc=s=>(s||"").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+function setCat(id){ST.form.categoria=id;renderNuova();}
+function tgMaps(){const b=document.getElementById("mBody"),a=document.getElementById("mArrow");if(!b)return;const o=b.style.display==="none";b.style.display=o?"block":"none";if(a)a.textContent=o?"▲":"▼";}
+function updML(){const p=(document.getElementById("mP")||{}).value||"",a=(document.getElementById("mA")||{}).value||"";ST.form.partenza=p;ST.form.arrivo=a;const l=document.getElementById("mLink");if(l)l.href=p&&a?"https://www.google.com/maps/dir/"+encodeURIComponent(p)+"/"+encodeURIComponent(a):"#";}
+function updKC(){const v=parseFloat((document.getElementById("mKm")||{}).value||0),t=tk(),el=document.getElementById("mCalc");if(el){if(v>0){el.textContent="= € "+fmt(v*t)+" ("+t+"€/km)";el.style.display="block";}else el.style.display="none";}}
+function useMKm(){const p=(document.getElementById("mP")||{}).value||"",a=(document.getElementById("mA")||{}).value||"",km=parseFloat((document.getElementById("mKm")||{}).value||0);if(!km){toast("Inserisci i km",true);return;}ST.form.km=String(km);ST.form.partenza=p;ST.form.arrivo=a;if(!ST.form.descrizione&&p&&a)ST.form.descrizione=p.split(",")[0]+" → "+a.split(",")[0];toast(km+" km impostati ✓");renderNuova();}
+function updKP(){const el=document.getElementById("kPrev");if(!el)return;const t=tk(),v=parseFloat(ST.form.km||0);el.innerHTML="= € "+fmt(v*t)+` <span style="opacity:.5;font-size:11px;">(${t}€/km)</span>`;}
+function rmFoto(){ST.foto=null;ST.aiSug=null;ST.form.foto=null;renderNuova();}
+function applyAI(){const s=ST.aiSug;if(!s)return;if(s.importo!=null)ST.form.importo=String(s.importo);if(s.descrizione)ST.form.descrizione=s.descrizione;if(s.categoria)ST.form.categoria=s.categoria;if(s.data)ST.form.data=s.data;if(s.note)ST.form.note=s.note;ST.aiSug=null;toast("Dati applicati ✓");renderNuova();}
+function salva(){
+  ST.form.descrizione=(document.getElementById("iDesc")||{}).value||ST.form.descrizione||"";
+  ST.form.importo=(document.getElementById("iImp")||{}).value||ST.form.importo||"";
+  ST.form.km=(document.getElementById("iKm")||{}).value||ST.form.km||"";
+  ST.form.note=(document.getElementById("iNote")||{}).value||ST.form.note||"";
+  ST.form.progetto=(document.getElementById("iProg")||{}).value||ST.form.progetto||"";
+  const showE=m=>{const el=document.getElementById("fErr");if(el){el.textContent=m;el.classList.remove("hidden");}toast(m,true);};
+  if(!ST.form.descrizione.trim()){showE("⚠ Aggiungi una descrizione");return;}
+  if(ST.form.categoria!=="km"&&!ST.form.importo){showE("⚠ Inserisci un importo");return;}
+  if(ST.form.categoria==="km"&&!ST.form.km){showE("⚠ Inserisci i km percorsi");return;}
+  const id=ST.editSId||String(Date.now());
+  const sp={...ST.form,id,foto:ST.foto,fotoMime:ST.fotoMime};
+  if(ST.editSId){DB.spese=DB.spese.map(s=>s.id===id?sp:s);toast("Aggiornata ✓");}
+  else{DB.spese.unshift(sp);toast("Salvata ✓");}
+  save();showOnly("lista");renderLista();syncSp(sp);
+}
+function delSp(id){if(!confirm("Eliminare?"))return;DB.spese=DB.spese.filter(s=>s.id!==id);save();renderLista();toast("Eliminata");syncDSp(id);}
+
+// ── FOTO/AI ───────────────────────────────────────────────────────────────────
+function onFoto(inp){
+  const file=inp.files[0];inp.value="";if(!file)return;
+  const mime=file.type||"image/jpeg";
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    const url=ev.target.result;if(!url)return;
+    const b64=url.split(",")[1];if(!b64)return;
+    ST.foto=url;ST.fotoMime=mime;ST.form.foto=url;
+    renderNuova();
+    const key=DB.profilo.anthropicKey||"",proxy=DB.profilo.aiProxyUrl||"";
+    if(!key||!proxy){toast("Foto salvata. Configura AI nelle Impostazioni.");return;}
+    const ld=document.getElementById("aiLoad");if(ld)ld.classList.remove("hidden");
+    aiScan(b64,mime,key,proxy).then(r=>{
+      if(ld)ld.classList.add("hidden");
+      if(!r||!Object.keys(r).length){toast("AI: nessun dato estratto",true);return;}
+      ST.aiSug=r;
+      const bx=document.getElementById("aiBox"),rw=document.getElementById("aiRows");
+      if(bx&&rw){
+        let rh="";
+        if(r.importo!=null)rh+=`<div class="aiRow"><span style="font-size:11px;color:#666;text-transform:uppercase;">Importo</span><span style="font-weight:600;color:#c8f0d0;">€ ${fmt(r.importo)}</span></div>`;
+        if(r.descrizione)rh+=`<div class="aiRow"><span style="font-size:11px;color:#666;text-transform:uppercase;">Descrizione</span><span style="font-weight:600;color:#c8f0d0;">${r.descrizione}</span></div>`;
+        if(r.categoria)rh+=`<div class="aiRow"><span style="font-size:11px;color:#666;text-transform:uppercase;">Categoria</span><span style="font-weight:600;color:#c8f0d0;">${(CAT.find(c=>c.id===r.categoria)||{}).e||""} ${r.categoria}</span></div>`;
+        if(r.data)rh+=`<div class="aiRow"><span style="font-size:11px;color:#666;text-transform:uppercase;">Data</span><span style="font-weight:600;color:#c8f0d0;">${r.data}</span></div>`;
+        if(r.note)rh+=`<div class="aiRow"><span style="font-size:11px;color:#666;text-transform:uppercase;">Note</span><span style="font-weight:600;color:#c8f0d0;">${r.note}</span></div>`;
+        rw.innerHTML=rh;bx.classList.remove("hidden");
+      }
+    }).catch(e=>{if(ld)ld.classList.add("hidden");toast("AI: "+e.message,true);});
+  };
+  reader.onerror=()=>toast("Errore lettura foto",true);
+  reader.readAsDataURL(file);
 }
 
-// ── Setup ─────────────────────────────────────────────────────────────────────
-function SetupScreen({onSetup,onSkip}){
-  const saved=loadCreds();
-  const [url,setUrl]=useState(saved.url||"");
-  const [key,setKey]=useState(saved.anonKey||"");
-  const [loading,setLoading]=useState(false);
-  const [err,setErr]=useState("");
-  const go=async()=>{
-    if(!url.trim()||!key.trim()){setErr("Inserisci entrambi i campi");return;}
-    setLoading(true);setErr("");
-    try{
-      const sb=initSB(url.trim(),key.trim());
-      try{await sb.select("spese","limit=1");}catch(e){if(e.message.includes("401")||e.message.includes("403")){setErr("Credenziali non valide");setLoading(false);return;}}
-      saveCreds({url:url.trim(),anonKey:key.trim()});
-      onSetup(sb);
-    }catch(e){saveCreds({url:url.trim(),anonKey:key.trim()});onSetup(initSB(url.trim(),key.trim()));}
-    setLoading(false);
-  };
-  return(
-    <div style={{minHeight:"100vh",background:"#0f0f14",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{background:"#17171f",border:"1px solid #2a2a38",borderRadius:20,padding:"32px 28px",width:"100%",maxWidth:440}}>
-        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(135deg,#d4a847,#e87b4b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:18,color:"#0f0f14",margin:"0 auto 16px"}}>NS</div>
-        <div style={{fontSize:22,fontWeight:800,color:"#f0ede6",textAlign:"center",marginBottom:4}}>Collega Supabase</div>
-        <div style={{fontSize:13,color:"#666",textAlign:"center",marginBottom:20}}>Sincronizzazione cloud gratuita</div>
-        <div style={{background:"#0e1620",border:"1px solid #1e3050",borderRadius:10,padding:14,marginBottom:16,fontSize:12,color:"#888",lineHeight:1.7}}>
-          <strong style={{color:"#4B8BE8"}}>3 passi su supabase.com:</strong><br/>
-          1. Crea account → nuovo progetto<br/>
-          2. Settings → API → copia URL e "anon public key"<br/>
-          3. SQL Editor → esegui lo script (vedi sotto)
-        </div>
-        <details style={{marginBottom:16}}>
-          <summary style={{fontSize:12,color:"#4B8BE8",cursor:"pointer",marginBottom:8}}>📋 Script SQL da eseguire</summary>
-          <pre style={{background:"#0a0a10",borderRadius:8,padding:10,fontSize:10,color:"#4BE8C3",overflow:"auto",lineHeight:1.5,whiteSpace:"pre-wrap"}}>{`create table if not exists spese (
-  id text primary key,
-  user_id uuid references auth.users,
-  data text, categoria text,
-  importo float, km float,
-  partenza text, arrivo text,
-  descrizione text, note text,
-  foto text, foto_media_type text,
-  cliente_id text, progetto text,
-  created_at timestamptz default now()
-);
+// ── CLIENTI ───────────────────────────────────────────────────────────────────
+function renderClienti(){
+  const t=tk();
+  let h=`<div class="fhdr"><button class="bBtn" onclick="showOnly('lista');renderLista();">← Indietro</button><h2 style="font-size:18px;font-weight:700;margin:0;">Clienti</h2><button class="btn-sm" style="margin-left:auto;" onclick="openEC()">+ Nuovo</button></div>`;
+  if(!DB.clienti.length)h+=`<div style="text-align:center;padding-top:60px;"><div style="font-size:48px;margin-bottom:12px;">👥</div><div style="color:#666;font-size:15px;margin-bottom:20px;">Nessun cliente</div><button class="btn" style="max-width:220px;margin:0 auto;" onclick="openEC()">+ Aggiungi</button></div>`;
+  else DB.clienti.forEach(c=>{const ns=DB.spese.filter(s=>s.clienteId===c.id).length,totC=DB.spese.filter(s=>s.clienteId===c.id).reduce((a,s)=>a+(s.categoria==="km"?(parseFloat(s.km)||0)*t:parseFloat(s.importo||0)),0),pj=prjC(c.id);h+=`<div class="card" style="align-items:flex-start;"><div style="width:40px;height:40px;border-radius:12px;background:${c.colore};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#0f0f14;flex-shrink:0;">${(c.nome[0]||"?").toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:14px;margin-bottom:3px;">${c.nome}</div>${c.piva?`<div style="font-size:11px;color:#777;margin-bottom:2px;">P.IVA: ${c.piva}</div>`:""} ${c.email?`<div style="font-size:11px;color:#777;margin-bottom:2px;">${c.email}</div>`:""}<div style="font-size:11px;color:#777;">${ns} spese · € ${fmt(totC)}</div>${pj.length?`<div class="ppills">${pj.map(p=>`<span class="ppill" style="border-color:${c.colore};color:${c.colore};">${p}</span>`).join("")}</div>`:""}</div><div style="display:flex;gap:4px;"><button class="aBtn" onclick="openEC('${c.id}')">✏</button><button class="aBtn" style="color:#c0392b;" onclick="delCl('${c.id}')">✕</button></div></div>`;});
+  const el=document.getElementById("vClienti");if(el)el.innerHTML=h;
+}
+function openEC(id){
+  ST.editCId=id||null;const c=id?DB.clienti.find(x=>x.id===id):null;
+  ST.ecColor=c?c.colore:COLORS[DB.clienti.length%COLORS.length];
+  let h=`<div class="fhdr"><button class="bBtn" onclick="showOnly('clienti');renderClienti();">← Indietro</button><h2 style="font-size:18px;font-weight:700;margin:0;">${c?"Modifica":"Nuovo cliente"}</h2></div>
+  <label class="lbl">Nome *</label><input class="inp" id="ecN" type="text" placeholder="Acme S.r.l." value="${esc(c?c.nome:"")}">
+  <label class="lbl">P.IVA</label><input class="inp" id="ecP" type="text" placeholder="IT00000000000" value="${esc(c&&c.piva?c.piva:"")}">
+  <label class="lbl">Email</label><input class="inp" id="ecE" type="email" placeholder="amm@cliente.it" value="${esc(c&&c.email?c.email:"")}">
+  <label class="lbl">Colore</label><div class="clrRow" id="ecClr"></div>
+  <button class="btn" onclick="saveCl()"> ${c?"💾 Aggiorna":"✓ Salva"}</button>`;
+  const el=document.getElementById("vEditC");if(el)el.innerHTML=h;
+  const cr=document.getElementById("ecClr");if(cr)cr.innerHTML=COLORS.map(col=>`<div class="clrSw" style="background:${col};${col===ST.ecColor?"outline:3px solid #fff;outline-offset:2px;":""}" onclick="selEC('${col}')"></div>`).join("");
+  showOnly("editCliente");
+}
+function selEC(col){ST.ecColor=col;const cr=document.getElementById("ecClr");if(cr)cr.innerHTML=COLORS.map(c=>`<div class="clrSw" style="background:${c};${c===col?"outline:3px solid #fff;outline-offset:2px;":""}" onclick="selEC('${c}')"></div>`).join("");}
+function saveCl(){const n=(document.getElementById("ecN")||{}).value||"";if(!n.trim()){toast("Inserisci il nome",true);return;}const c={id:ST.editCId||String(Date.now()),nome:n.trim(),piva:(document.getElementById("ecP")||{}).value||"",email:(document.getElementById("ecE")||{}).value||"",colore:ST.ecColor};if(ST.editCId)DB.clienti=DB.clienti.map(x=>x.id===c.id?c:x);else DB.clienti.push(c);save();toast(ST.editCId?"Aggiornato ✓":"Aggiunto ✓");renderClienti();showOnly("clienti");syncCl(c);}
+function delCl(id){if(!confirm("Eliminare?"))return;DB.clienti=DB.clienti.filter(c=>c.id!==id);save();renderClienti();toast("Eliminato");syncDCl(id);}
+
+// ── MODAL INLINE ──────────────────────────────────────────────────────────────
+function openMC(){ST.ncColor=COLORS[DB.clienti.length%COLORS.length];const cr=document.getElementById("ncColors");if(cr)cr.innerHTML=COLORS.map(c=>`<div class="clrSw" style="background:${c};${c===ST.ncColor?"outline:3px solid #fff;outline-offset:2px;":""}" onclick="selNC('${c}')"></div>`).join("");const i=document.getElementById("ncNome");if(i){i.value="";setTimeout(()=>i.focus(),100);}document.getElementById("modCliente").classList.add("show");}
+function selNC(c){ST.ncColor=c;const cr=document.getElementById("ncColors");if(cr)cr.innerHTML=COLORS.map(x=>`<div class="clrSw" style="background:${x};${x===c?"outline:3px solid #fff;outline-offset:2px;":""}" onclick="selNC('${x}')"></div>`).join("");}
+function saveNC(){const n=(document.getElementById("ncNome")||{}).value||"";if(!n.trim()){toast("Inserisci il nome",true);return;}const c={id:String(Date.now()),nome:n.trim(),piva:"",email:"",colore:ST.ncColor};DB.clienti.push(c);save();ST.form.clienteId=c.id;ST.form.progetto="";closeModal("modCliente");toast("Cliente creato ✓");renderNuova();syncCl(c);}
+function openMP(){const el=document.getElementById("npCl");if(el){el.textContent=nmC(ST.form.clienteId);el.style.color=clC(ST.form.clienteId);}const i=document.getElementById("npNome");if(i){i.value="";setTimeout(()=>i.focus(),100);}document.getElementById("modProgetto").classList.add("show");}
+function saveNP(){const n=(document.getElementById("npNome")||{}).value||"";if(!n.trim()){toast("Inserisci il nome",true);return;}ST.form.progetto=n.trim();closeModal("modProgetto");toast("Progetto impostato ✓");renderNuova();}
+
+// ── IMPOSTAZIONI ──────────────────────────────────────────────────────────────
+function renderImpost(){
+  const p=DB.profilo,u=ST.utente;
+  let h=`<div class="fhdr"><button class="bBtn" onclick="showOnly('lista');renderLista();">← Indietro</button><h2 style="font-size:18px;font-weight:700;margin:0;">Profilo & Dati</h2></div>`;
+  if(u)h+=`<div class="connBar"><div><div style="color:#4BE84B;font-weight:600;font-size:13px;">☁ Connesso</div><div style="font-size:12px;color:#888;margin-top:2px;">${u.email||""}</div></div><button style="background:transparent;border:1px solid #555;color:#888;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;" onclick="doLogout()">Esci</button></div>`;
+  h+=`<label class="lbl">Nome / Ragione sociale</label><input class="inp" id="pN" type="text" placeholder="Mario Rossi" value="${esc(p.nome||"")}">
+  <label class="lbl">P.IVA</label><input class="inp" id="pPiva" type="text" placeholder="IT00000000000" value="${esc(p.piva||"")}">
+  <label class="lbl">Tariffa rimborso km</label>
+  <div style="position:relative;margin-bottom:4px;"><input class="inp" id="pTk" type="number" min="0" step="0.01" placeholder="0.40" value="${p.tariffaKm||0.40}" style="margin-bottom:0;padding-right:44px;"><div style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:#888;pointer-events:none;">€/km</div></div>
+  <div style="font-size:11px;color:#555;margin-bottom:18px;">ACI 2024: 0,40 €/km</div>
+  <label class="lbl">Chiave API Anthropic (AI scontrini)</label><input class="inp" id="pAK" type="password" placeholder="sk-ant-..." value="${esc(p.anthropicKey||"")}">
+  <label class="lbl">URL Proxy Cloudflare</label><input class="inp" id="pPx" type="text" placeholder="https://anthropic-proxy.tuonome.workers.dev" value="${esc(p.aiProxyUrl||"")}">
+  <div style="font-size:11px;color:#555;margin-bottom:18px;">Necessario per AI. Vedi cloudflare-worker.js.</div>
+  <button class="btn" onclick="saveProf()">💾 Salva profilo</button>
+  <div class="infoBox" style="margin-top:20px;"><strong style="color:#d4a847;">⚠ Backup</strong><br>I dati sono anche nel browser. Esporta regolarmente.</div>
+  <button class="btn" style="background:#1a2a1a;color:#4BE84B;border:1px solid #4BE84B;" onclick="expJSON()">⬇ Esporta backup JSON</button>
+  <label class="btn" style="background:#1a1a2a;color:#4B8BE8;border:1px solid #4B8BE8;text-align:center;cursor:pointer;margin-top:8px;">⬆ Importa da JSON<input type="file" accept=".json" style="display:none;" onchange="impJSON(this)"></label>
+  <button class="btn-out" style="margin-top:8px;" onclick="reconfigSB()">🔧 Riconfigura Supabase</button>
+  <button class="btn" style="background:transparent;border:1px solid #c0392b;color:#c0392b;margin-top:8px;" onclick="clearLocal()">🗑 Cancella dati locali</button>`;
+  const el=document.getElementById("vImpost");if(el)el.innerHTML=h;
+}
+function saveProf(){DB.profilo={nome:(document.getElementById("pN")||{}).value||"",piva:(document.getElementById("pPiva")||{}).value||"",tariffaKm:parseFloat((document.getElementById("pTk")||{}).value)||0.40,anthropicKey:(document.getElementById("pAK")||{}).value||"",aiProxyUrl:(document.getElementById("pPx")||{}).value||""};save();toast("Profilo salvato ✓");showOnly("lista");renderLista();syncProf(DB.profilo);}
+function expJSON(){const b=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="notaspese-"+new Date().toISOString().slice(0,10)+".json";a.click();}
+function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();toast("Importato ✓");renderLista();}catch{toast("File non valido",true);}};r.readAsText(f);}
+function reconfigSB(){svCr({url:"",anonKey:""});renderSetup();}
+function clearLocal(){if(confirm("Eliminare tutti i dati locali?")){DB=defDB();save();toast("Eliminati");renderLista();}}
+function doLogout(){if(sb)sb.logout();ST.utente=null;renderLogin();}
+
+// ── SETUP ─────────────────────────────────────────────────────────────────────
+function renderSetup(){
+  ["scr-app","scr-login","scr-load"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add("hidden");});
+  const saved=ldCr(),el=document.getElementById("scr-setup");
+  if(!el)return;el.classList.remove("hidden");
+  el.innerHTML=`<div style="min-height:100vh;background:#0f0f14;display:flex;align-items:center;justify-content:center;padding:20px;"><div style="background:#17171f;border:1px solid #2a2a38;border-radius:20px;padding:32px 28px;width:100%;max-width:440px;">
+  <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d4a847,#e87b4b);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0f0f14;margin:0 auto 16px;">NS</div>
+  <div style="font-size:22px;font-weight:800;text-align:center;margin-bottom:4px;">Collega Supabase</div>
+  <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px;">Sincronizzazione cloud gratuita</div>
+  <div style="background:#0e1620;border:1px solid #1e3050;border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#888;line-height:1.7;"><strong style="color:#4B8BE8;">3 passi su supabase.com:</strong><br>1. Crea account → nuovo progetto<br>2. Settings → API → copia URL e "anon public key"<br>3. SQL Editor → esegui lo script (vedi sotto)</div>
+  <details style="margin-bottom:16px;"><summary>📋 Script SQL da eseguire</summary>
+  <pre>create table if not exists spese (
+  id text primary key, user_id uuid references auth.users,
+  data text, categoria text, importo float, km float,
+  partenza text, arrivo text, descrizione text, note text,
+  foto text, foto_media_type text, cliente_id text, progetto text,
+  created_at timestamptz default now());
 create table if not exists clienti (
-  id text primary key,
-  user_id uuid references auth.users,
-  nome text, piva text,
-  email text, colore text,
-  created_at timestamptz default now()
-);
+  id text primary key, user_id uuid references auth.users,
+  nome text, piva text, email text, colore text,
+  created_at timestamptz default now());
 create table if not exists profilo (
-  id text primary key,
-  user_id uuid references auth.users unique,
-  nome text, piva text,
-  tariffa_km float default 0.40,
-  created_at timestamptz default now()
-);
+  id text primary key, user_id uuid references auth.users unique,
+  nome text, piva text, tariffa_km float default 0.40,
+  created_at timestamptz default now());
 alter table spese enable row level security;
 alter table clienti enable row level security;
 alter table profilo enable row level security;
 create policy "own" on spese using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "own" on clienti using (auth.uid()=user_id) with check (auth.uid()=user_id);
-create policy "own" on profilo using (auth.uid()=user_id) with check (auth.uid()=user_id);`}</pre>
-        </details>
-        <label style={{fontSize:12,color:"#888",display:"block",marginBottom:6,textTransform:"uppercase"}}>Project URL</label>
-        <input type="text" placeholder="https://xxxx.supabase.co" value={url} onChange={e=>setUrl(e.target.value)}
-          style={{background:"#0f0f14",border:"1px solid #2a2a38",borderRadius:10,padding:14,color:"#f0ede6",fontSize:15,marginBottom:16,outline:"none",width:"100%",boxSizing:"border-box"}}/>
-        <label style={{fontSize:12,color:"#888",display:"block",marginBottom:6,textTransform:"uppercase"}}>Anon public key</label>
-        <input type="text" placeholder="eyJhbGciOiJIUzI1NiIs..." value={key} onChange={e=>setKey(e.target.value)}
-          style={{background:"#0f0f14",border:"1px solid #2a2a38",borderRadius:10,padding:14,color:"#f0ede6",fontSize:15,marginBottom:16,outline:"none",width:"100%",boxSizing:"border-box"}}/>
-        {err&&<div style={{fontSize:13,color:"#e87b4b",marginBottom:12,padding:10,background:"#2a1010",borderRadius:8}}>{err}</div>}
-        <button onClick={go} disabled={loading}
-          style={{background:"linear-gradient(135deg,#d4a847,#e87b4b)",border:"none",borderRadius:12,padding:15,color:"#0f0f14",fontWeight:700,fontSize:16,cursor:"pointer",width:"100%",marginBottom:10}}>
-          {loading?"Connessione…":"🔗 Collega Supabase"}
-        </button>
-        <button onClick={onSkip} style={{background:"none",border:"none",color:"#666",fontSize:13,cursor:"pointer",width:"100%",textAlign:"center"}}>Usa solo in locale</button>
-      </div>
-    </div>
-  );
+create policy "own" on profilo using (auth.uid()=user_id) with check (auth.uid()=user_id);</pre></details>
+  <label class="lbl">Project URL</label><input class="inp" id="sUrl" type="text" placeholder="https://xxxx.supabase.co" value="${esc(saved.url||"")}">
+  <label class="lbl">Anon public key</label><input class="inp" id="sKey" type="text" placeholder="eyJhbGciOiJIUzI1NiIs..." value="${esc(saved.anonKey||"")}">
+  <div id="sErr" class="errBox hidden"></div>
+  <button class="btn" id="sBt" onclick="doSetup()">🔗 Collega Supabase</button>
+  <button class="btn-out" onclick="skipSetup()">Usa solo in locale</button>
+  </div></div>`;
+}
+async function doSetup(){
+  const url=(document.getElementById("sUrl")||{}).value||"",key=(document.getElementById("sKey")||{}).value||"";
+  const err=document.getElementById("sErr"),btn=document.getElementById("sBt");
+  if(!url||!key){if(err){err.textContent="Inserisci entrambi i campi";err.classList.remove("hidden");}return;}
+  if(btn)btn.textContent="Connessione…";
+  try{sb=new SB(url.trim(),key.trim());try{await sb.sel("spese","limit=1");}catch(e){if(e.message.includes("401")||e.message.includes("403")){if(err){err.textContent="Credenziali non valide";err.classList.remove("hidden");}if(btn)btn.textContent="🔗 Collega Supabase";return;}}svCr({url:url.trim(),anonKey:key.trim()});renderLogin();}catch{svCr({url:url.trim(),anonKey:key.trim()});renderLogin();}
+}
+function skipSetup(){renderApp();}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function renderLogin(){
+  ["scr-app","scr-setup","scr-load"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add("hidden");});
+  const el=document.getElementById("scr-login");if(!el)return;
+  el.classList.remove("hidden");
+  el.innerHTML=`<div style="min-height:100vh;background:#0f0f14;display:flex;align-items:center;justify-content:center;padding:20px;"><div style="background:#17171f;border:1px solid #2a2a38;border-radius:20px;padding:32px 28px;width:100%;max-width:380px;">
+  <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d4a847,#e87b4b);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0f0f14;margin:0 auto 16px;">NS</div>
+  <div style="font-size:22px;font-weight:800;text-align:center;margin-bottom:4px;">NotaSpese</div>
+  <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px;">Accedi al tuo account</div>
+  <div class="tabs"><button class="tab on" id="tA" onclick="swTab('accedi')">Accedi</button><button class="tab" id="tR" onclick="swTab('registrati')">Registrati</button></div>
+  <div id="lInfo" class="hidden" style="font-size:13px;color:#4BE84B;margin-bottom:12px;padding:10px;background:#0e200e;border-radius:8px;border:1px solid #2a4a2a;"></div>
+  <label class="lbl">Email</label><input class="inp" id="lEm" type="email" placeholder="gianni@esempio.it" onkeydown="if(event.key=='Enter')doLogin()">
+  <label class="lbl">Password</label><input class="inp" id="lPw" type="password" placeholder="La tua password" onkeydown="if(event.key=='Enter')doLogin()">
+  <div id="lErr" class="errBox hidden"></div>
+  <button class="btn" id="lBt" onclick="doLogin()">→ Accedi</button>
+  </div></div>`;
+}
+let loginTab="accedi";
+function swTab(t){loginTab=t;["accedi","registrati"].forEach(n=>{const e=document.getElementById(n==="accedi"?"tA":"tR");if(e)e.classList.toggle("on",n===t);});const b=document.getElementById("lBt");if(b)b.textContent=t==="accedi"?"→ Accedi":"✓ Crea account";const p=document.getElementById("lPw");if(p)p.placeholder=t==="registrati"?"Minimo 6 caratteri":"La tua password";const err=document.getElementById("lErr");if(err)err.classList.add("hidden");}
+async function doLogin(){
+  const em=(document.getElementById("lEm")||{}).value||"",pw=(document.getElementById("lPw")||{}).value||"";
+  const err=document.getElementById("lErr"),info=document.getElementById("lInfo"),btn=document.getElementById("lBt");
+  if(!em||!pw){if(err){err.textContent="Inserisci email e password";err.classList.remove("hidden");}return;}
+  if(loginTab==="registrati"&&pw.length<6){if(err){err.textContent="Password minimo 6 caratteri";err.classList.remove("hidden");}return;}
+  if(btn)btn.textContent="…";if(err)err.classList.add("hidden");
+  try{
+    const d=loginTab==="accedi"?await sb.signIn(em.trim(),pw.trim()):await sb.signUp(em.trim(),pw.trim());
+    sb.svSess(d);ST.utente=d.user||{email:em.trim()};
+    renderApp();ldCloud();
+  }catch(e){
+    if(e.message==="CONFIRM_EMAIL"){if(info){info.textContent="Controlla la tua email per confermare, poi accedi.";info.classList.remove("hidden");}swTab("accedi");}
+    else{if(err){err.textContent=e.message;err.classList.remove("hidden");}}
+    if(btn)btn.textContent=loginTab==="accedi"?"→ Accedi":"✓ Crea account";
+  }
 }
 
-// ── App principale ────────────────────────────────────────────────────────────
-export default function App(){
-  const [fase,setFase]     = useState("init");
-  const [utente,setUtente] = useState(null);
-  const [data,setData]     = useState(loadData);
-  const [profilo,setProfilo] = useState(()=>loadData().profilo||defaultProfilo());
-  const [view,setView]     = useState("lista");
-  const [toast,setToast]   = useState(null);
-  const [syncSt,setSyncSt] = useState("idle");
-  const fileRef = useRef();
-
-  const tariffaKm    = parseFloat(profilo.tariffaKm)||0.40;
-  const anthropicKey = profilo.anthropicKey||"";
-  const aiProxyUrl   = profilo.aiProxyUrl||"";
-
-  // Filtri
-  const [periodo,setPeriodo] = useState(()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");});
-  const [fCliente,setFCliente]   = useState("tutti");
-  const [fProgetto,setFProgetto] = useState("tutti");
-  const [fCat,setFCat]           = useState("tutti");
-
-  // Form spesa
-  const blankForm = () => ({id:null,data:new Date().toISOString().slice(0,10),categoria:"pasto",importo:"",km:"",partenza:"",arrivo:"",descrizione:"",note:"",foto:null,fotoMime:"image/jpeg",clienteId:"",progetto:""});
-  const [form,setForm]       = useState(blankForm);
-  const [formErr,setFormErr] = useState("");
-  const [aiLoad,setAiLoad]   = useState(false);
-  const [aiSug,setAiSug]     = useState(null);
-
-  // Modali inline
-  const [showNC,setShowNC]   = useState(false);
-  const [ncNome,setNcNome]   = useState("");
-  const [ncColor,setNcColor] = useState(CLIENT_COLORS[0]);
-  const [showNP,setShowNP]   = useState(false);
-  const [npNome,setNpNome]   = useState("");
-
-  // Form cliente
-  const blankCliente = () => ({id:null,nome:"",piva:"",email:"",colore:CLIENT_COLORS[data.clienti.length%CLIENT_COLORS.length]});
-  const [cForm,setCForm] = useState(blankCliente);
-
-  useEffect(()=>{ saveData(data); },[data]);
-
-  const toast_show = (msg,tipo="ok") => { setToast({msg,tipo}); setTimeout(()=>setToast(null),3000); };
-
-  // Init
-  useEffect(()=>{
-    const creds=loadCreds();
-    if(!creds.url||!creds.anonKey){setFase("setup");return;}
-    const sb=initSB(creds.url,creds.anonKey);
-    sb.session().then(s=>{
-      if(s){setUtente(s.user||{email:"utente"});setSyncSt("ok");setFase("app");loadCloud(sb,s);}
-      else{setFase("login");}
-    }).catch(()=>setFase("login"));
-  },[]);
-
-  // Cloud sync
-  const loadCloud = useCallback(async(sb,s)=>{
-    if(!sb||!s) return;
-    setSyncSt("syncing");
-    try{
-      const uid=s.user?.id||s.sub;
-      const [sp,cl,pr]=await Promise.all([sb.select("spese","user_id=eq."+uid),sb.select("clienti","user_id=eq."+uid),sb.select("profilo","user_id=eq."+uid)]);
-      const p=pr[0]||{};
-      const profDB={nome:p.nome||"",piva:p.piva||"",tariffaKm:p.tariffa_km||0.40,anthropicKey:"",aiProxyUrl:""};
-      // Merge local keys (non stored on server for security)
-      const localP=lsGet(LS_KEY)?.profilo||{};
-      profDB.anthropicKey=localP.anthropicKey||"";
-      profDB.aiProxyUrl=localP.aiProxyUrl||"";
-      const speseDB=sp.map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));
-      const clientiDB=cl.map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));
-      setData({spese:speseDB,clienti:clientiDB,profilo:profDB});
-      setProfilo(profDB);
-      setSyncSt("ok");
-    }catch(e){setSyncSt("err");toast_show("Errore sync: "+e.message,"err");}
-  },[]);
-
-  const syncSpesa=async spesa=>{
-    const sb=getSB();if(!sb||!utente)return;
-    const s=await sb.session().catch(()=>null);if(!s)return;
-    const uid=s.user?.id||s.sub;
-    setSyncSt("syncing");
-    try{
-      await sb.upsert("spese",{id:String(spesa.id),user_id:uid,data:spesa.data,categoria:spesa.categoria,importo:spesa.importo?parseFloat(spesa.importo):null,km:spesa.km?parseFloat(spesa.km):null,partenza:spesa.partenza||null,arrivo:spesa.arrivo||null,descrizione:spesa.descrizione,note:spesa.note||null,foto:spesa.foto||null,foto_media_type:spesa.fotoMime||null,cliente_id:spesa.clienteId||null,progetto:spesa.progetto||null});
-      setSyncSt("ok");
-    }catch(e){setSyncSt("err");toast_show("Errore cloud: "+e.message,"err");}
-  };
-  const syncDelSpesa=async id=>{const sb=getSB();if(!sb||!utente)return;try{await sb.del("spese",id);}catch{}};
-  const syncCliente=async c=>{
-    const sb=getSB();if(!sb||!utente)return;
-    const s=await sb.session().catch(()=>null);if(!s)return;
-    const uid=s.user?.id||s.sub;
-    try{await sb.upsert("clienti",{id:String(c.id),user_id:uid,nome:c.nome,piva:c.piva||null,email:c.email||null,colore:c.colore});}catch{}
-  };
-  const syncDelCliente=async id=>{const sb=getSB();if(!sb||!utente)return;try{await sb.del("clienti",id);}catch{}};
-  const syncProfilo=async p=>{
-    const sb=getSB();if(!sb||!utente)return;
-    const s=await sb.session().catch(()=>null);if(!s)return;
-    const uid=s.user?.id||s.sub;
-    try{await sb.upsert("profilo",{id:uid,user_id:uid,nome:p.nome,piva:p.piva,tariffa_km:parseFloat(p.tariffaKm)||0.40});}catch{}
-  };
-
-  // CRUD
-  const salvaSpesa=async()=>{
-    setFormErr("");
-    if(!form.descrizione.trim()){setFormErr("⚠ Aggiungi una descrizione");return;}
-    if(form.categoria!=="km"&&!form.importo){setFormErr("⚠ Inserisci un importo");return;}
-    if(form.categoria==="km"&&!form.km){setFormErr("⚠ Inserisci i km percorsi");return;}
-    const spesa={...form,id:form.id||String(Date.now())};
-    setData(prev=>({...prev,spese:form.id?prev.spese.map(s=>s.id===form.id?spesa:s):[spesa,...prev.spese]}));
-    toast_show(form.id?"Spesa aggiornata ✓":"Spesa salvata ✓");
-    setForm(blankForm());setAiSug(null);setFormErr("");setView("lista");
-    syncSpesa(spesa);
-  };
-  const delSpesa=async id=>{if(!confirm("Eliminare?"))return;setData(p=>({...p,spese:p.spese.filter(s=>s.id!==id)}));toast_show("Eliminata");syncDelSpesa(id);};
-
-  const creaClienteInline=async()=>{
-    if(!ncNome.trim()){toast_show("Inserisci il nome","err");return;}
-    const c={id:String(Date.now()),nome:ncNome.trim(),piva:"",email:"",colore:ncColor};
-    setData(prev=>({...prev,clienti:[...prev.clienti,c]}));
-    setForm(f=>({...f,clienteId:c.id,progetto:""}));
-    setNcNome("");setShowNC(false);toast_show("Cliente creato ✓");
-    syncCliente(c);
-  };
-  const creaProgettoInline=()=>{if(!npNome.trim()){toast_show("Inserisci il nome","err");return;}setForm(f=>({...f,progetto:npNome.trim()}));setNpNome("");setShowNP(false);toast_show("Progetto impostato ✓");};
-
-  const salvaCliente=async()=>{
-    if(!cForm.nome.trim()){toast_show("Inserisci il nome","err");return;}
-    const c={...cForm,id:cForm.id||String(Date.now())};
-    setData(prev=>({...prev,clienti:cForm.id?prev.clienti.map(x=>x.id===cForm.id?c:x):[...prev.clienti,c]}));
-    toast_show(cForm.id?"Cliente aggiornato ✓":"Cliente aggiunto ✓");
-    setCForm(blankCliente());setView("clienti");syncCliente(c);
-  };
-  const delCliente=async id=>{if(!confirm("Eliminare?"))return;setData(prev=>({...prev,clienti:prev.clienti.filter(c=>c.id!==id)}));toast_show("Eliminato");syncDelCliente(id);};
-
-  const salvaProfilo=async()=>{
-    const p={...profilo};
-    setData(prev=>({...prev,profilo:p}));setProfilo(p);
-    toast_show("Profilo salvato ✓");setView("lista");
-    syncProfilo(p);
-  };
-
-  // Foto + AI
-  const fotoHandler=e=>{
-    const file=e.target.files[0];
-    e.target.value="";
-    if(!file) return;
-    const mime=file.type||"image/jpeg";
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      const url=ev.target.result;
-      if(!url) return;
-      const b64=url.split(",")[1];
-      if(!b64) return;
-      setForm(f=>({...f,foto:url,fotoMime:mime}));
-      if(!anthropicKey||!aiProxyUrl){toast_show("Foto salvata. Configura AI nelle Impostazioni per l'analisi automatica");return;}
-      setAiLoad(true);setAiSug(null);
-      analizzaScontrino(b64,mime,anthropicKey,aiProxyUrl)
-        .then(r=>{ if(r&&Object.keys(r).length>0) setAiSug(r); else toast_show("AI: nessun dato estratto","err"); })
-        .catch(e=>toast_show("AI: "+e.message,"err"))
-        .finally(()=>setAiLoad(false));
-    };
-    reader.onerror=()=>toast_show("Errore lettura foto","err");
-    reader.readAsDataURL(file);
-  };
-
-  const applicaAi=()=>{
-    if(!aiSug) return;
-    setForm(f=>({...f,
-      importo:aiSug.importo!=null?String(aiSug.importo):f.importo,
-      descrizione:aiSug.descrizione||f.descrizione,
-      categoria:aiSug.categoria||f.categoria,
-      data:aiSug.data||f.data,
-      note:aiSug.note||f.note,
-    }));
-    setAiSug(null);toast_show("Dati applicati ✓");
-  };
-
-  const onKmCalcolato=(km,p,a)=>{setForm(f=>({...f,km:String(km),partenza:p,arrivo:a,descrizione:f.descrizione||(p.split(",")[0]+" → "+a.split(",")[0])}));toast_show(km+" km ✓");};
-
-  // Helpers
-  const nomeC  = id => (data.clienti.find(c=>c.id===id)||{}).nome||"";
-  const coloreC= id => (data.clienti.find(c=>c.id===id)||{}).colore||"#888";
-  const projC  = cid => cid?[...new Set(data.spese.filter(s=>s.clienteId===cid).map(s=>s.progetto).filter(Boolean))]:[];
-
-  const speseFiltrate=data.spese.filter(s=>{
-    if(!s.data.startsWith(periodo)) return false;
-    if(fCliente!=="tutti"&&s.clienteId!==fCliente) return false;
-    if(fProgetto!=="tutti"&&s.progetto!==fProgetto) return false;
-    if(fCat!=="tutti"&&s.categoria!==fCat) return false;
-    return true;
-  }).sort((a,b)=>b.data.localeCompare(a.data));
-
-  const totale=speseFiltrate.reduce((acc,s)=>acc+(s.categoria==="km"?(parseFloat(s.km)||0)*tariffaKm:parseFloat(s.importo||0)),0);
-
-  const esportaJSON=()=>{const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="notaspese-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();};
-  const importaJSON=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{setData(JSON.parse(ev.target.result));toast_show("Importato ✓");}catch{toast_show("File non valido","err");}};r.readAsText(f);};
-
-  // Routing
-  if(fase==="init") return <div style={{minHeight:"100vh",background:"#0f0f14",display:"flex",alignItems:"center",justifyContent:"center",color:"#666"}}>Caricamento…</div>;
-  if(fase==="setup") return <SetupScreen onSetup={()=>setFase("login")} onSkip={()=>setFase("app")}/>;
-  if(fase==="login") return <LoginScreen onLogin={u=>{setUtente(u);const sb=getSB();sb.session().then(s=>{if(s)loadCloud(sb,s);});setFase("app");}}/>;
-
-  const syncDot=syncSt==="syncing"?"🔄":syncSt==="ok"?"☁":"⚠";
-  const syncCol=syncSt==="err"?"#e87b4b":syncSt==="ok"?"#4BE84B":"#888";
-  const projFiltro=fCliente!=="tutti"?projC(fCliente):[...new Set(data.spese.map(s=>s.progetto).filter(Boolean))];
-  const projForm=form.clienteId?projC(form.clienteId):[];
-
-  return(
-    <div style={S.root}>
-      {toast&&<div style={{...S.toast,background:toast.tipo==="err"?"#c0392b":"#1a6b3c"}}>{toast.msg}</div>}
-
-      {/* Modal nuovo cliente */}
-      {showNC&&(
-        <div style={S.overlay}><div style={S.modal}>
-          <div style={S.modalTitle}>Nuovo cliente</div>
-          <input autoFocus type="text" placeholder="Nome" value={ncNome} onChange={e=>setNcNome(e.target.value)} onKeyDown={e=>e.key==="Enter"&&creaClienteInline()} style={S.input}/>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16}}>{CLIENT_COLORS.map(col=><div key={col} style={{width:32,height:32,borderRadius:8,background:col,cursor:"pointer",...(ncColor===col?{outline:"3px solid #fff",outlineOffset:2}:{})}} onClick={()=>setNcColor(col)}/>)}</div>
-          <div style={{display:"flex",gap:10}}>
-            <button style={{...S.saveBtn,flex:1,padding:12}} onClick={creaClienteInline}>✓ Crea</button>
-            <button style={{...S.cancelBtn,flex:1}} onClick={()=>{setShowNC(false);setNcNome("");}}>Annulla</button>
-          </div>
-        </div></div>
-      )}
-
-      {/* Modal nuovo progetto */}
-      {showNP&&(
-        <div style={S.overlay}><div style={S.modal}>
-          <div style={S.modalTitle}>Nuovo progetto</div>
-          <div style={{fontSize:12,color:"#888",marginBottom:10}}>Cliente: <span style={{color:coloreC(form.clienteId),fontWeight:600}}>{nomeC(form.clienteId)}</span></div>
-          <input autoFocus type="text" placeholder="Nome progetto" value={npNome} onChange={e=>setNpNome(e.target.value)} onKeyDown={e=>e.key==="Enter"&&creaProgettoInline()} style={S.input}/>
-          <div style={{display:"flex",gap:10}}>
-            <button style={{...S.saveBtn,flex:1,padding:12}} onClick={creaProgettoInline}>✓ Crea</button>
-            <button style={{...S.cancelBtn,flex:1}} onClick={()=>{setShowNP(false);setNpNome("");}}>Annulla</button>
-          </div>
-        </div></div>
-      )}
-
-      {/* Header */}
-      <header style={S.header}>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={S.logo}>NS</div>
-          <div>
-            <div style={S.appTitle}>NotaSpese</div>
-            <div style={{fontSize:11,color:"#666",marginTop:1}}>
-              {utente?<span style={{color:syncCol}}>{syncDot} {utente.email?.split("@")[0]}</span>:<span style={{color:"#555"}}>locale</span>}
-            </div>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:6}}>
-          <button style={S.iconBtn} onClick={()=>{setForm(blankForm());setAiSug(null);setView("nuova");}}>＋</button>
-          <button style={S.iconBtn} onClick={()=>{setCForm(blankCliente());setView("clienti");}}>👥</button>
-          <button style={S.iconBtn} onClick={()=>setView("impostazioni")}>⚙</button>
-        </div>
-      </header>
-
-      {/* LISTA */}
-      {view==="lista"&&(
-        <div style={S.page}>
-          <div style={S.toolbar}>
-            <input type="month" value={periodo} onChange={e=>setPeriodo(e.target.value)} style={S.monthPicker}/>
-            <select value={fCat} onChange={e=>setFCat(e.target.value)} style={S.select}>
-              <option value="tutti">Tutte</option>
-              {CATEGORIE.map(c=><option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
-            </select>
-          </div>
-          <div style={S.toolbar}>
-            <select value={fCliente} onChange={e=>{setFCliente(e.target.value);setFProgetto("tutti");}} style={{...S.select,flex:1}}>
-              <option value="tutti">Tutti i clienti</option>
-              {data.clienti.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
-            <select value={fProgetto} onChange={e=>setFProgetto(e.target.value)} style={{...S.select,flex:1}} disabled={projFiltro.length===0}>
-              <option value="tutti">Tutti i progetti</option>
-              {projFiltro.map(p=><option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-
-          <div style={S.summaryCard}>
-            <div>
-              <div style={{fontSize:11,color:"#888",letterSpacing:"0.5px",textTransform:"uppercase"}}>Totale periodo</div>
-              <div style={{fontSize:26,fontWeight:800,color:"#d4a847",letterSpacing:"-1px"}}>€ {fmt(totale)}</div>
-              {fCliente!=="tutti"&&<div style={{fontSize:11,color:coloreC(fCliente),marginTop:2}}>{nomeC(fCliente)}{fProgetto!=="tutti"&&" · "+fProgetto}</div>}
-            </div>
-            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8}}>
-              <div style={{fontSize:12,color:"#888"}}>{speseFiltrate.length} spese</div>
-              <button style={S.exportBtn} onClick={()=>loadJsPDF(()=>esportaPDF(speseFiltrate,profilo,fCliente!=="tutti"?nomeC(fCliente):"Tutti i clienti",fProgetto!=="tutti"?fProgetto:"",periodo,tariffaKm,Object.fromEntries(data.clienti.map(c=>[c.id,c.nome]))))}>⬇ PDF</button>
-            </div>
-          </div>
-
-          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:14}}>
-            {CATEGORIE.map(c=>{
-              const tot=speseFiltrate.filter(s=>s.categoria===c.id).reduce((a,s)=>a+(s.categoria==="km"?(parseFloat(s.km)||0)*tariffaKm:parseFloat(s.importo||0)),0);
-              if(tot===0) return null;
-              return <div key={c.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 12px",borderRadius:20,border:"1px solid "+c.colore,background:c.colore+"22",fontSize:12,fontWeight:500}}><span>{c.emoji}</span><span style={{color:c.colore,fontWeight:600}}>€ {fmt(tot)}</span></div>;
-            })}
-          </div>
-
-          {speseFiltrate.length===0?(
-            <div style={{textAlign:"center",paddingTop:60}}>
-              <div style={{fontSize:48,marginBottom:12}}>🧾</div>
-              <div style={{color:"#666",fontSize:15,marginBottom:20}}>Nessuna spesa nel periodo</div>
-              <button style={S.addFirstBtn} onClick={()=>{setForm(blankForm());setView("nuova");}}>+ Aggiungi spesa</button>
-            </div>
-          ):(
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {speseFiltrate.map(s=>{
-                const cat=CATEGORIE.find(x=>x.id===s.categoria);
-                const imp=s.categoria==="km"?(parseFloat(s.km)||0)*tariffaKm:parseFloat(s.importo||0);
-                const cc=coloreC(s.clienteId);
-                return(
-                  <div key={s.id} style={S.card}>
-                    <div style={{width:40,height:40,borderRadius:12,background:cat?cat.colore:"#aaa",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{cat?cat.emoji:"?"}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:14,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.descrizione}</div>
-                      <div style={{fontSize:11,color:"#777",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                        {new Date(s.data+"T12:00:00").toLocaleDateString("it-IT",{day:"2-digit",month:"short"})}
-                        {s.clienteId&&<span style={{color:cc,fontWeight:600}}> · {nomeC(s.clienteId)}</span>}
-                        {s.progetto&&<span style={{color:"#888"}}> · {s.progetto}</span>}
-                        {s.categoria==="km"&&<span style={{color:"#888"}}> {s.km}km</span>}
-                      </div>
-                    </div>
-                    <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
-                      <div style={{fontWeight:700,fontSize:15,color:"#d4a847"}}>€ {fmt(imp)}</div>
-                      <div style={{display:"flex",alignItems:"center",gap:4}}>
-                        {s.foto&&<span>📷</span>}
-                        <button style={S.actionBtn} onClick={()=>{setForm({...s});setAiSug(null);setView("nuova");}}>✏</button>
-                        <button style={{...S.actionBtn,color:"#c0392b"}} onClick={()=>delSpesa(s.id)}>✕</button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* NUOVA/MODIFICA SPESA */}
-      {view==="nuova"&&(
-        <div style={S.page}>
-          <div style={S.formHeader}>
-            <button style={S.backBtn} onClick={()=>{setForm(blankForm());setAiSug(null);setFormErr("");setView("lista");}}>← Indietro</button>
-            <h2 style={{fontSize:18,fontWeight:700,margin:0}}>{form.id?"Modifica spesa":"Nuova spesa"}</h2>
-          </div>
-
-          {/* Foto + AI */}
-          <div style={{marginBottom:20}}>
-            <div style={{background:"#17171f",border:"2px dashed #2a2a38",borderRadius:12,minHeight:80,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",marginBottom:10,overflow:"hidden"}}
-              onClick={()=>fileRef.current.click()}>
-              {form.foto
-                ?<img src={form.foto} alt="scontrino" style={{width:"100%",maxHeight:220,objectFit:"cover"}}/>
-                :<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,color:"#555",padding:"16px 0"}}>
-                  <span style={{fontSize:28}}>📷</span>
-                  <span style={{fontSize:13}}>Fotografa lo scontrino</span>
-                  <span style={{fontSize:11,color:"#444"}}>L'AI compilerà i campi automaticamente</span>
-                </div>}
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={fotoHandler}/>
-            {aiLoad&&<div style={{background:"#1a1a2e",border:"1px solid #4B8BE8",borderRadius:10,padding:"10px 14px",display:"flex",gap:10,fontSize:13,color:"#4B8BE8",marginBottom:10}}>⟳ Analisi AI in corso…</div>}
-            {aiSug&&!aiLoad&&(
-              <div style={{background:"#0e1e14",border:"1px solid #2a4a2e",borderRadius:12,padding:14,marginBottom:10}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,color:"#4BE870",fontWeight:700,fontSize:13}}>✨ L'AI ha letto lo scontrino</div>
-                {aiSug.importo!=null&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:"#666",textTransform:"uppercase"}}>Importo</span><span style={{fontSize:13,fontWeight:600,color:"#c8f0d0"}}>€ {fmt(aiSug.importo)}</span></div>}
-                {aiSug.descrizione&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:"#666",textTransform:"uppercase"}}>Descrizione</span><span style={{fontSize:13,fontWeight:600,color:"#c8f0d0"}}>{aiSug.descrizione}</span></div>}
-                {aiSug.categoria&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:"#666",textTransform:"uppercase"}}>Categoria</span><span style={{fontSize:13,fontWeight:600,color:"#c8f0d0"}}>{CATEGORIE.find(c=>c.id===aiSug.categoria)?.emoji} {aiSug.categoria}</span></div>}
-                {aiSug.data&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:"#666",textTransform:"uppercase"}}>Data</span><span style={{fontSize:13,fontWeight:600,color:"#c8f0d0"}}>{aiSug.data}</span></div>}
-                {aiSug.note&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:"#666",textTransform:"uppercase"}}>Note</span><span style={{fontSize:13,fontWeight:600,color:"#c8f0d0"}}>{aiSug.note}</span></div>}
-                <div style={{display:"flex",gap:8,marginTop:10}}>
-                  <button style={{...S.saveBtn,flex:1,padding:10,fontSize:13}} onClick={applicaAi}>✓ Applica</button>
-                  <button style={{...S.cancelBtn,flex:1,padding:10}} onClick={()=>setAiSug(null)}>Ignora</button>
-                </div>
-              </div>
-            )}
-            {form.foto&&<button style={{background:"none",border:"none",color:"#c0392b",fontSize:12,cursor:"pointer",padding:"0 0 4px"}} onClick={()=>{setForm(f=>({...f,foto:null}));setAiSug(null);}}>✕ Rimuovi foto</button>}
-          </div>
-
-          {/* Categoria */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
-            {CATEGORIE.map(c=>(
-              <button key={c.id} onClick={()=>setForm(f=>({...f,categoria:c.id}))}
-                style={{background:"#17171f",border:"1px solid "+(form.categoria===c.id?c.colore:"#2a2a38"),borderRadius:12,padding:"12px 8px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,color:form.categoria===c.id?c.colore:"#aaa",...(form.categoria===c.id?{background:c.colore+"33"}:{})}}>
-                <span style={{fontSize:22}}>{c.emoji}</span>
-                <span style={{fontSize:11,fontWeight:500}}>{c.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div style={{display:"flex",flexDirection:"column"}}>
-            <label style={S.label}>Data</label>
-            <input type="date" value={form.data} onChange={e=>setForm(f=>({...f,data:e.target.value}))} style={S.input}/>
-
-            <label style={S.label}>Descrizione *</label>
-            <input type="text" placeholder="es. Pranzo con cliente" value={form.descrizione} onChange={e=>setForm(f=>({...f,descrizione:e.target.value}))} style={S.input}/>
-
-            <label style={S.label}>Cliente</label>
-            <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
-              <div style={{position:"relative",flex:1}}>
-                <select value={form.clienteId} onChange={e=>setForm(f=>({...f,clienteId:e.target.value,progetto:""}))}
-                  style={{...S.input,marginBottom:0,width:"100%",boxSizing:"border-box"}}>
-                  <option value="">— Nessun cliente —</option>
-                  {data.clienti.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-                </select>
-              </div>
-              <button style={S.inlineAddBtn} onClick={()=>{setNcNome("");setNcColor(CLIENT_COLORS[data.clienti.length%CLIENT_COLORS.length]);setShowNC(true);}}>＋</button>
-            </div>
-
-            <label style={S.label}>Progetto</label>
-            <div style={{display:"flex",gap:8,marginBottom:18,alignItems:"center"}}>
-              <input type="text" list="sugg-proj" placeholder={form.clienteId?"Scegli o digita":"Seleziona prima un cliente"}
-                value={form.progetto} onChange={e=>setForm(f=>({...f,progetto:e.target.value}))}
-                style={{...S.input,marginBottom:0,flex:1,opacity:form.clienteId?1:0.4}} disabled={!form.clienteId}/>
-              <datalist id="sugg-proj">{projForm.map(p=><option key={p} value={p}/>)}</datalist>
-              <button style={{...S.inlineAddBtn,opacity:form.clienteId?1:0.35}} disabled={!form.clienteId} onClick={()=>{setNpNome("");setShowNP(true);}}>＋</button>
-            </div>
-
-            {form.categoria==="km"?(
-              <>
-                <KmCalcolatore onKmCalcolato={onKmCalcolato} partenzaInit={form.partenza} arrivoInit={form.arrivo} tariffaKm={tariffaKm}/>
-                <label style={S.label}>Km percorsi *</label>
-                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:18}}>
-                  <input type="number" min="0" step="0.1" placeholder="0" value={form.km} onChange={e=>setForm(f=>({...f,km:e.target.value}))} style={{...S.input,flex:1,marginBottom:0}}/>
-                  <div style={{fontSize:13,color:"#d4a847",fontWeight:600,whiteSpace:"nowrap"}}>= € {fmt((parseFloat(form.km)||0)*tariffaKm)} <span style={{opacity:0.5,fontSize:11}}>({tariffaKm}€/km)</span></div>
-                </div>
-              </>
-            ):(
-              <>
-                <label style={S.label}>Importo (€) *</label>
-                <input type="number" min="0" step="0.01" placeholder="0.00" value={form.importo} onChange={e=>setForm(f=>({...f,importo:e.target.value}))} style={S.input}/>
-              </>
-            )}
-
-            <label style={S.label}>Note</label>
-            <input type="text" placeholder="Note aggiuntive" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} style={S.input}/>
-
-            {formErr&&<div style={{background:"#2a1010",border:"1px solid #c0392b",borderRadius:10,padding:"12px 14px",marginBottom:8,fontSize:14,color:"#e87b4b",fontWeight:600}}>{formErr}</div>}
-            <button style={S.saveBtn} onClick={salvaSpesa}>{form.id?"💾 Aggiorna spesa":"✓ Salva spesa"}</button>
-          </div>
-        </div>
-      )}
-
-      {/* CLIENTI */}
-      {view==="clienti"&&(
-        <div style={S.page}>
-          <div style={S.formHeader}>
-            <button style={S.backBtn} onClick={()=>setView("lista")}>← Indietro</button>
-            <h2 style={{fontSize:18,fontWeight:700,margin:0}}>Clienti</h2>
-            <button style={{...S.exportBtn,marginLeft:"auto"}} onClick={()=>{setCForm(blankCliente());setView("editCliente");}}>+ Nuovo</button>
-          </div>
-          {data.clienti.length===0?(
-            <div style={{textAlign:"center",paddingTop:60}}>
-              <div style={{fontSize:48,marginBottom:12}}>👥</div>
-              <div style={{color:"#666",fontSize:15,marginBottom:20}}>Nessun cliente ancora</div>
-              <button style={S.addFirstBtn} onClick={()=>{setCForm(blankCliente());setView("editCliente");}}>+ Aggiungi cliente</button>
-            </div>
-          ):(
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {data.clienti.map(c=>{
-                const nS=data.spese.filter(s=>s.clienteId===c.id).length;
-                const totC=data.spese.filter(s=>s.clienteId===c.id).reduce((a,s)=>a+(s.categoria==="km"?(parseFloat(s.km)||0)*tariffaKm:parseFloat(s.importo||0)),0);
-                const proj=projC(c.id);
-                return(
-                  <div key={c.id} style={{...S.card,alignItems:"flex-start"}}>
-                    <div style={{width:40,height:40,borderRadius:12,background:c.colore,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#0f0f14",flexShrink:0}}>{(c.nome[0]||"?").toUpperCase()}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:600,fontSize:14,marginBottom:3}}>{c.nome}</div>
-                      {c.piva&&<div style={{fontSize:11,color:"#777",marginBottom:2}}>P.IVA: {c.piva}</div>}
-                      {c.email&&<div style={{fontSize:11,color:"#777",marginBottom:2}}>{c.email}</div>}
-                      <div style={{fontSize:11,color:"#777"}}>{nS} spese · € {fmt(totC)}</div>
-                      {proj.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>{proj.map(p=><span key={p} style={{fontSize:10,fontWeight:600,border:"1px solid "+c.colore,borderRadius:10,padding:"2px 8px",color:c.colore}}>{p}</span>)}</div>}
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:4}}>
-                      <button style={S.actionBtn} onClick={()=>{setCForm({...c});setView("editCliente");}}>✏</button>
-                      <button style={{...S.actionBtn,color:"#c0392b"}} onClick={()=>delCliente(c.id)}>✕</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* EDIT CLIENTE */}
-      {view==="editCliente"&&(
-        <div style={S.page}>
-          <div style={S.formHeader}>
-            <button style={S.backBtn} onClick={()=>setView("clienti")}>← Indietro</button>
-            <h2 style={{fontSize:18,fontWeight:700,margin:0}}>{cForm.id?"Modifica":"Nuovo cliente"}</h2>
-          </div>
-          <div style={{display:"flex",flexDirection:"column"}}>
-            <label style={S.label}>Nome *</label>
-            <input type="text" placeholder="Acme S.r.l." value={cForm.nome} onChange={e=>setCForm(f=>({...f,nome:e.target.value}))} style={S.input}/>
-            <label style={S.label}>P.IVA</label>
-            <input type="text" placeholder="IT00000000000" value={cForm.piva||""} onChange={e=>setCForm(f=>({...f,piva:e.target.value}))} style={S.input}/>
-            <label style={S.label}>Email</label>
-            <input type="email" placeholder="amm@cliente.it" value={cForm.email||""} onChange={e=>setCForm(f=>({...f,email:e.target.value}))} style={S.input}/>
-            <label style={S.label}>Colore</label>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:24}}>{CLIENT_COLORS.map(col=><div key={col} style={{width:32,height:32,borderRadius:8,background:col,cursor:"pointer",...(cForm.colore===col?{outline:"3px solid #fff",outlineOffset:2}:{})}} onClick={()=>setCForm(f=>({...f,colore:col}))}/>)}</div>
-            <button style={S.saveBtn} onClick={salvaCliente}>{cForm.id?"💾 Aggiorna":"✓ Salva"}</button>
-          </div>
-        </div>
-      )}
-
-      {/* IMPOSTAZIONI */}
-      {view==="impostazioni"&&(
-        <div style={S.page}>
-          <div style={S.formHeader}>
-            <button style={S.backBtn} onClick={()=>setView("lista")}>← Indietro</button>
-            <h2 style={{fontSize:18,fontWeight:700,margin:0}}>Profilo & Dati</h2>
-          </div>
-          <div style={{display:"flex",flexDirection:"column"}}>
-            {utente&&(
-              <div style={{background:"#0e1620",border:"1px solid #1e3050",borderRadius:10,padding:"12px 14px",marginBottom:20,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div><div style={{color:"#4BE84B",fontWeight:600,fontSize:13}}>☁ Connesso</div><div style={{fontSize:12,color:"#888",marginTop:2}}>{utente.email}</div></div>
-                <button style={{background:"transparent",border:"1px solid #555",color:"#888",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}} onClick={()=>{getSB()?.logout();setUtente(null);setFase("login");}}>Esci</button>
-              </div>
-            )}
-            <label style={S.label}>Nome / Ragione sociale</label>
-            <input type="text" placeholder="Mario Rossi" value={profilo.nome||""} onChange={e=>setProfilo(p=>({...p,nome:e.target.value}))} style={S.input}/>
-            <label style={S.label}>P.IVA</label>
-            <input type="text" placeholder="IT00000000000" value={profilo.piva||""} onChange={e=>setProfilo(p=>({...p,piva:e.target.value}))} style={S.input}/>
-            <label style={S.label}>Tariffa rimborso km</label>
-            <div style={{position:"relative",marginBottom:4}}>
-              <input type="number" min="0" step="0.01" placeholder="0.40" value={profilo.tariffaKm??0.40} onChange={e=>setProfilo(p=>({...p,tariffaKm:e.target.value}))} style={{...S.input,marginBottom:0,paddingRight:44}}/>
-              <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",fontSize:12,color:"#888",pointerEvents:"none"}}>€/km</div>
-            </div>
-            <div style={{fontSize:11,color:"#555",marginBottom:18}}>ACI 2024: 0,40 €/km</div>
-
-            <label style={S.label}>Chiave API Anthropic (AI scontrini)</label>
-            <input type="password" placeholder="sk-ant-..." value={profilo.anthropicKey||""} onChange={e=>setProfilo(p=>({...p,anthropicKey:e.target.value}))} style={S.input}/>
-            <label style={S.label}>URL Proxy Cloudflare</label>
-            <input type="text" placeholder="https://anthropic-proxy.tuonome.workers.dev" value={profilo.aiProxyUrl||""} onChange={e=>setProfilo(p=>({...p,aiProxyUrl:e.target.value}))} style={S.input}/>
-            <div style={{fontSize:11,color:"#555",marginBottom:18}}>Necessario per l'AI. Vedi cloudflare-worker.js per la configurazione.</div>
-
-            <button style={S.saveBtn} onClick={salvaProfilo}>💾 Salva profilo</button>
-
-            <div style={{background:"#1a1a24",borderRadius:10,padding:"12px 14px",fontSize:12,color:"#888",lineHeight:1.6,marginBottom:18,marginTop:20}}>
-              <strong style={{color:"#d4a847"}}>⚠ Backup</strong><br/>I dati sono anche nel browser. Esporta regolarmente.
-            </div>
-            <button style={{...S.saveBtn,background:"#1a2a1a",color:"#4BE84B",border:"1px solid #4BE84B"}} onClick={esportaJSON}>⬇ Esporta backup JSON</button>
-            <label style={{...S.saveBtn,background:"#1a1a2a",color:"#4B8BE8",border:"1px solid #4B8BE8",textAlign:"center",display:"block",cursor:"pointer",marginTop:10}}>
-              ⬆ Importa da JSON<input type="file" accept=".json" style={{display:"none"}} onChange={importaJSON}/>
-            </label>
-            <button style={{background:"transparent",border:"1px solid #555",color:"#666",borderRadius:10,padding:12,fontSize:13,cursor:"pointer",marginTop:10}} onClick={()=>{saveCreds({url:"",anonKey:""});setFase("setup");}}>🔧 Riconfigura Supabase</button>
-            <button style={{...S.saveBtn,background:"transparent",border:"1px solid #c0392b",color:"#c0392b",marginTop:10}} onClick={()=>{if(confirm("Eliminare tutti i dati locali?")){setData(defaultData());toast_show("Dati locali eliminati");}}}>🗑 Cancella dati locali</button>
-          </div>
-        </div>
-      )}
-
-      {view==="lista"&&<button style={S.fab} onClick={()=>{setForm(blankForm());setAiSug(null);setView("nuova");}}>＋</button>}
-    </div>
-  );
+// ── APP INIT ──────────────────────────────────────────────────────────────────
+function renderApp(){
+  ["scr-load","scr-setup","scr-login"].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add("hidden");});
+  document.getElementById("scr-app").classList.remove("hidden");
+  setSyncUI("idle");renderLista();showOnly("lista");
 }
+(async function init(){
+  const cr=ldCr();
+  if(!cr.url||!cr.anonKey){renderSetup();return;}
+  sb=new SB(cr.url,cr.anonKey);
+  const s=await sb.sess().catch(()=>null);
+  if(s){ST.utente=s.user||{email:"utente"};renderApp();ldCloud();}
+  else renderLogin();
+})();
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-const S = {
-  root:{minHeight:"100vh",background:"#0f0f14",color:"#f0ede6",fontFamily:"'DM Sans','Segoe UI',sans-serif",maxWidth:480,margin:"0 auto",position:"relative"},
-  header:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px",background:"#0f0f14",borderBottom:"1px solid #1e1e28",position:"sticky",top:0,zIndex:10},
-  logo:{width:36,height:36,borderRadius:10,background:"linear-gradient(135deg,#d4a847,#e87b4b)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,color:"#0f0f14"},
-  appTitle:{fontWeight:700,fontSize:16,letterSpacing:"-0.3px"},
-  iconBtn:{background:"#1a1a24",border:"none",color:"#f0ede6",width:34,height:34,borderRadius:10,fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"},
-  page:{padding:"16px 20px 100px"},
-  toolbar:{display:"flex",gap:10,marginBottom:10},
-  monthPicker:{flex:1,background:"#1a1a24",border:"1px solid #2a2a38",color:"#f0ede6",borderRadius:10,padding:"8px 12px",fontSize:13},
-  select:{flex:1.4,background:"#1a1a24",border:"1px solid #2a2a38",color:"#f0ede6",borderRadius:10,padding:"8px 12px",fontSize:12},
-  summaryCard:{background:"linear-gradient(135deg,#1c1a10,#1a1014)",border:"1px solid #2e2a1a",borderRadius:16,padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,marginTop:6},
-  exportBtn:{background:"#d4a847",color:"#0f0f14",border:"none",borderRadius:8,padding:"6px 14px",fontWeight:700,fontSize:13,cursor:"pointer"},
-  card:{background:"#17171f",border:"1px solid #1e1e28",borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:12},
-  actionBtn:{background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:14,padding:"2px 6px"},
-  formHeader:{display:"flex",alignItems:"center",gap:14,marginBottom:20},
-  backBtn:{background:"none",border:"none",color:"#d4a847",fontSize:14,cursor:"pointer",padding:0},
-  label:{fontSize:12,color:"#888",letterSpacing:"0.4px",marginBottom:6,textTransform:"uppercase"},
-  input:{background:"#17171f",border:"1px solid #2a2a38",borderRadius:10,padding:"12px 14px",color:"#f0ede6",fontSize:15,marginBottom:18,outline:"none",WebkitAppearance:"none",width:"100%",boxSizing:"border-box"},
-  inlineAddBtn:{background:"#d4a847",border:"none",color:"#0f0f14",width:36,height:48,borderRadius:10,fontSize:20,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700},
-  saveBtn:{background:"linear-gradient(135deg,#d4a847,#e87b4b)",border:"none",borderRadius:12,padding:15,color:"#0f0f14",fontWeight:700,fontSize:16,cursor:"pointer",marginTop:8},
-  cancelBtn:{background:"#1a1a24",border:"1px solid #2a2a38",borderRadius:12,padding:12,color:"#aaa",fontWeight:600,fontSize:14,cursor:"pointer"},
-  addFirstBtn:{background:"#d4a847",color:"#0f0f14",border:"none",borderRadius:12,padding:"12px 24px",fontWeight:700,fontSize:15,cursor:"pointer"},
-  overlay:{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:50,padding:"0 24px"},
-  modal:{background:"#17171f",border:"1px solid #2a2a38",borderRadius:16,padding:24,width:"100%",maxWidth:380},
-  modalTitle:{fontSize:17,fontWeight:700,marginBottom:16},
-  fab:{position:"fixed",bottom:28,right:"calc(50% - 240px + 20px)",width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#d4a847,#e87b4b)",border:"none",color:"#0f0f14",fontSize:28,cursor:"pointer",boxShadow:"0 4px 20px rgba(212,168,71,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:20},
-  toast:{position:"fixed",bottom:100,left:"50%",transform:"translateX(-50%)",padding:"14px 28px",borderRadius:30,fontSize:15,fontWeight:700,color:"#fff",zIndex:200,boxShadow:"0 4px 24px rgba(0,0,0,0.6)",whiteSpace:"nowrap",maxWidth:"90vw",textAlign:"center"},
-};
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(App));
 </script>
 </body>
 </html>
