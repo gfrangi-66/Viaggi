@@ -289,48 +289,110 @@ Estrai: { "importo": numero|null, "descrizione": "stringa breve", "categoria": "
 };
 
 // ─── PDF ──────────────────────────────────────────────────────────────────────
-const esportaPDF = (spese, profilo, clienteNome, progetto, periodo, tariffaKm) => {
+const esportaPDF = (spese, profilo, clienteNome, progetto, periodo, tariffaKm, clientiMap) => {
   if (!window.jspdf) { alert("Libreria PDF non caricata, riprova."); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:"mm", format:"a4" });
   const W=210, M=14;
-  doc.setFillColor(15,15,20); doc.rect(0,0,W,42,"F");
-  doc.setTextColor(255,255,255); doc.setFontSize(20); doc.setFont("helvetica","bold");
-  doc.text("NOTA SPESE",M,14);
-  doc.setFontSize(9); doc.setFont("helvetica","normal");
-  doc.text(profilo.nome||"—",M,22);
-  doc.text("P.IVA: "+(profilo.piva||"—"),M,28);
-  if(clienteNome){doc.setTextColor(200,180,100);doc.text("Cliente: "+clienteNome,M,34);}
-  if(progetto){doc.setTextColor(150,200,150);doc.text("Progetto: "+progetto,M+72,34);}
-  doc.setTextColor(200,180,100); doc.text("Periodo: "+periodo,W-M,22,{align:"right"});
-  doc.setTextColor(150,150,150); doc.text("Generata il "+new Date().toLocaleDateString("it-IT"),W-M,28,{align:"right"});
-  let y=52; const cols=[14,30,58,100,132,163];
-  doc.setFillColor(240,240,235); doc.rect(M-2,y-5,W-2*M+4,8,"F");
-  doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont("helvetica","bold");
-  ["Data","Cat.","Descrizione","Percorso / Note","Km","Importo"].forEach((h,i)=>doc.text(h,cols[i],y));
+
+  // ── Header band ──
+  const headerH = clienteNome || progetto ? 48 : 38;
+  doc.setFillColor(15,15,20); doc.rect(0,0,W,headerH,"F");
+
+  // Titolo
+  doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont("helvetica","bold");
+  doc.text("NOTA SPESE",M,13);
+
+  // Profilo (sinistra)
+  doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(200,200,200);
+  doc.text(profilo.nome||"—", M, 21);
+  doc.text("P.IVA: "+(profilo.piva||"—"), M, 27);
+
+  // Cliente e progetto (sinistra, sotto)
+  if(clienteNome){
+    doc.setTextColor(212,168,71);
+    doc.setFont("helvetica","bold"); doc.setFontSize(9);
+    doc.text("Cliente: ", M, 35);
+    doc.setFont("helvetica","normal"); doc.setTextColor(255,220,120);
+    doc.text(clienteNome, M+18, 35);
+  }
+  if(progetto){
+    doc.setTextColor(100,220,160);
+    doc.setFont("helvetica","bold"); doc.setFontSize(9);
+    doc.text("Progetto: ", M+70, 35);
+    doc.setFont("helvetica","normal"); doc.setTextColor(150,255,180);
+    doc.text(progetto, M+90, 35);
+  }
+
+  // Periodo e data (destra)
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(212,168,71);
+  doc.text("Periodo: "+periodo, W-M, 21, {align:"right"});
+  doc.setFont("helvetica","normal"); doc.setTextColor(130,130,130); doc.setFontSize(8);
+  doc.text("Generata il "+new Date().toLocaleDateString("it-IT"), W-M, 28, {align:"right"});
+  doc.text(spese.length+" spese", W-M, 34, {align:"right"});
+
+  // ── Tabella ──
+  // Colonne: Data | Categoria | Cliente | Progetto | Descrizione | Km | Importo
+  const multiCliente = !clienteNome || clienteNome === "Tutti i clienti";
+  let y = headerH + 10;
+
+  // Intestazioni colonne
+  let cols, headers;
+  if(multiCliente) {
+    cols    = [14, 26, 52, 86, 120, 155, 178];
+    headers = ["Data","Cat.","Cliente","Progetto","Descrizione","Km","Importo"];
+  } else {
+    cols    = [14, 26, 60, 104, 140, 166, 186];
+    headers = ["Data","Cat.","Progetto","Descrizione","Note / Percorso","Km","Importo"];
+  }
+
+  doc.setFillColor(235,233,225); doc.rect(M-2, y-5, W-2*M+4, 8, "F");
+  doc.setTextColor(30,30,30); doc.setFontSize(7.5); doc.setFont("helvetica","bold");
+  headers.forEach((h,i) => doc.text(h, cols[i], y));
+
   doc.setFont("helvetica","normal"); let totale=0;
   spese.forEach((s,idx)=>{
-    y+=8; if(y>265){doc.addPage();y=20;}
-    if(idx%2===0){doc.setFillColor(250,249,245);doc.rect(M-2,y-5,W-2*M+4,8,"F");}
-    const cat=CATEGORIE.find(c=>c.id===s.categoria);
-    const importo=s.categoria==="km"?(s.km||0)*tariffaKm:parseFloat(s.importo||0);
-    totale+=importo;
-    doc.setTextColor(80,80,80);
-    doc.text(s.data,cols[0],y);
-    doc.text(cat?cat.label.substring(0,8):s.categoria,cols[1],y);
-    doc.text(doc.splitTextToSize(s.descrizione||"",38)[0]||"",cols[2],y);
-    const percorso=s.categoria==="km"&&s.partenza&&s.arrivo?s.partenza.split(",")[0]+"→"+s.arrivo.split(",")[0]:(s.note||"").substring(0,28);
-    doc.text(percorso.substring(0,30),cols[3],y);
-    doc.setTextColor(30,30,30); doc.setFont("helvetica","bold");
-    if(s.categoria==="km")doc.text(String(s.km||0)+" km",cols[4],y);
-    doc.text("€ "+fmt(importo),cols[5]+24,y,{align:"right"});
-    doc.setFont("helvetica","normal");
+    y+=8; if(y>268){doc.addPage();y=16;}
+    if(idx%2===0){doc.setFillColor(250,249,246);doc.rect(M-2,y-5,W-2*M+4,8,"F");}
+    const cat   = CATEGORIE.find(c=>c.id===s.categoria);
+    const importo = s.categoria==="km" ? (s.km||0)*tariffaKm : parseFloat(s.importo||0);
+    totale += importo;
+
+    doc.setTextColor(70,70,70); doc.setFontSize(7.5);
+    doc.text(s.data, cols[0], y);
+    doc.text(cat ? cat.label.substring(0,8) : s.categoria, cols[1], y);
+
+    if(multiCliente){
+      // Mostra cliente e progetto per riga
+      const cn = (clientiMap&&clientiMap[s.clienteId]) || "";
+      doc.text(cn.substring(0,16), cols[2], y);
+      doc.text((s.progetto||"").substring(0,16), cols[3], y);
+      doc.text(doc.splitTextToSize(s.descrizione||"",34)[0]||"", cols[4], y);
+      doc.setTextColor(50,50,50); doc.setFont("helvetica","bold");
+      if(s.categoria==="km") doc.text((s.km||0)+"", cols[5], y);
+      doc.text("€ "+fmt(importo), cols[6]+14, y, {align:"right"});
+    } else {
+      // Filtro singolo cliente: mostra progetto e note/percorso
+      doc.text((s.progetto||"").substring(0,18), cols[2], y);
+      doc.text(doc.splitTextToSize(s.descrizione||"",38)[0]||"", cols[3], y);
+      const extra = s.categoria==="km"&&s.partenza&&s.arrivo
+        ? s.partenza.split(",")[0]+"→"+(s.arrivo||"").split(",")[0]
+        : (s.note||"").substring(0,22);
+      doc.text(extra.substring(0,24), cols[4], y);
+      doc.setTextColor(50,50,50); doc.setFont("helvetica","bold");
+      if(s.categoria==="km") doc.text((s.km||0)+"", cols[5], y);
+      doc.text("€ "+fmt(importo), cols[6]+14, y, {align:"right"});
+    }
+    doc.setFont("helvetica","normal"); doc.setTextColor(70,70,70);
   });
+
+  // ── Totale ──
   y+=12;
-  doc.setFillColor(15,15,20); doc.rect(M-2,y-6,W-2*M+4,10,"F");
+  doc.setFillColor(15,15,20); doc.rect(M-2, y-6, W-2*M+4, 11, "F");
   doc.setTextColor(220,180,80); doc.setFont("helvetica","bold"); doc.setFontSize(10);
-  doc.text("TOTALE RIMBORSO RICHIESTO",M,y);
-  doc.text("€ "+fmt(totale),W-M,y,{align:"right"});
+  doc.text("TOTALE RIMBORSO RICHIESTO", M, y);
+  doc.text("€ "+fmt(totale), W-M, y, {align:"right"});
+
   const slug=[clienteNome,progetto,periodo].filter(Boolean).join("-").replace(/\s+/g,"-");
   doc.save("nota-spese-"+slug+".pdf");
 };
@@ -876,7 +938,7 @@ function App() {
             </div>
             <div style={S.summaryRight}>
               <div style={S.summaryCount}>{speseFiltrate.length} spese</div>
-              <button style={S.exportBtn} onClick={()=>loadJsPDF(()=>esportaPDF(speseFiltrate,data.profilo,filtroCliente!=="tutti"?nomeCliente(filtroCliente):"Tutti",filtroProgetto!=="tutti"?filtroProgetto:"",periodo,tariffaKm))}>⬇ PDF</button>
+              <button style={S.exportBtn} onClick={()=>loadJsPDF(()=>esportaPDF(speseFiltrate,data.profilo,filtroCliente!=="tutti"?nomeCliente(filtroCliente):"Tutti i clienti",filtroProgetto!=="tutti"?filtroProgetto:"",periodo,tariffaKm,Object.fromEntries(data.clienti.map(c=>[c.id,c.nome]))))}>⬇ PDF</button>
             </div>
           </div>
           <div style={S.chips}>
