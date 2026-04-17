@@ -219,38 +219,65 @@ function doPDF(){
     doc.setTextColor(220,180,80);doc.setFont("helvetica","bold");doc.setFontSize(10);
     doc.text("TOTALE RIMBORSO RICHIESTO",M,y);doc.text("€ "+fmt(tot),W-M,y,{align:"right"});
 
-    // ── Pagine allegati foto ──
+    // ── Pagine allegati foto — 4 per pagina, griglia 2x2 ──
     const spConFoto=sp.filter(s=>s.foto);
     if(spConFoto.length>0){
-      doc.addPage();
-      doc.setFillColor(15,15,20);doc.rect(0,0,W,20,"F");
-      doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
-      doc.text("ALLEGATI SCONTRINI",M,13);
-      let ay=30;
-      spConFoto.forEach((s,idx)=>{
+      // Layout: 2 colonne x 2 righe per pagina
+      // Ogni cella: larghezza ~88mm, altezza ~58mm (foto 46mm + label 12mm)
+      const cols2=2, rows2=2, perPag=cols2*rows2;
+      const cellW=(W-2*M-6)/cols2;  // ~88mm
+      const labelH=12, imgH=52, cellH=labelH+imgH+4;
+      const startY=28; // dopo header pagina
+
+      for(let i=0;i<spConFoto.length;i++){
+        const pageIdx=Math.floor(i/perPag);
+        const posInPage=i%perPag;
+        const col=posInPage%cols2;
+        const row=Math.floor(posInPage/cols2);
+
+        // Nuova pagina
+        if(posInPage===0){
+          doc.addPage();
+          doc.setFillColor(15,15,20);doc.rect(0,0,W,20,"F");
+          doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");
+          const totPag=Math.ceil(spConFoto.length/perPag);
+          doc.text("ALLEGATI SCONTRINI — pagina "+(pageIdx+1)+" di "+totPag,M,13);
+        }
+
+        const s=spConFoto[i];
         const cat=CAT.find(c=>c.id===s.categoria);
         const imp=s.categoria==="km"?(parseFloat(s.km)||0)*tk:parseFloat(s.importo||0);
         const dp=(s.data||"").split("-");
         const df=dp.length===3?dp[2]+"/"+dp[1]+"/"+dp[0].slice(2):s.data||"";
-        // Label spesa
-        doc.setFillColor(30,30,40);doc.rect(M-2,ay-4,W-2*M+4,10,"F");
-        doc.setTextColor(212,168,71);doc.setFontSize(8);doc.setFont("helvetica","bold");
-        doc.text((idx+1)+". "+df+" — "+(cat?cat.l:s.categoria)+" — "+esc2(s.descrizione||"")+" — € "+fmt(imp),M,ay+2);
-        if(s.clienteId){const cn=(cMap[s.clienteId])||"";if(cn){doc.setTextColor(180,180,180);doc.text("Cliente: "+cn+(s.progetto?" · "+s.progetto:""),W-M,ay+2,{align:"right"});}}
-        ay+=14;
+        const cx=M+(col*(cellW+6));
+        const cy=startY+(row*(cellH+6));
+
+        // Sfondo label
+        doc.setFillColor(25,25,38);doc.rect(cx,cy,cellW,labelH,"F");
+        // Numero + data
+        doc.setTextColor(212,168,71);doc.setFontSize(7);doc.setFont("helvetica","bold");
+        doc.text((i+1)+". "+df,cx+2,cy+4);
+        // Categoria + importo
+        doc.setTextColor(200,200,200);doc.setFontSize(6.5);doc.setFont("helvetica","normal");
+        doc.text((cat?cat.l:s.categoria)+" · € "+fmt(imp),cx+2,cy+8);
+        // Descrizione
+        doc.setTextColor(160,160,160);doc.setFontSize(6);
+        const desc=esc2(s.descrizione||"").substring(0,32);
+        doc.text(desc,cx+2,cy+11.5);
+        // Cliente
+        if(s.clienteId){const cn=(cMap[s.clienteId])||"";if(cn){doc.setTextColor(100,180,240);doc.setFontSize(6);doc.text(cn.substring(0,20),cx+cellW-2,cy+4,{align:"right"});}}
+
         // Foto
         try{
-          const imgH=80,imgW=W-2*M+4;
-          if(ay+imgH>280){doc.addPage();ay=16;}
-          doc.addImage(s.foto,"JPEG",M-2,ay,imgW,imgH,"","MEDIUM");
-          ay+=imgH+10;
+          doc.addImage(s.foto,"JPEG",cx,cy+labelH,cellW,imgH,"img"+i,"MEDIUM");
+          // Bordo sottile
+          doc.setDrawColor(40,40,60);doc.rect(cx,cy,cellW,labelH+imgH);
         }catch(e){
-          doc.setTextColor(150,100,100);doc.setFontSize(8);doc.setFont("helvetica","normal");
-          doc.text("[Immagine non incorporabile]",M,ay);
-          ay+=10;
+          doc.setFillColor(20,20,30);doc.rect(cx,cy+labelH,cellW,imgH,"F");
+          doc.setTextColor(100,100,120);doc.setFontSize(8);doc.setFont("helvetica","normal");
+          doc.text("foto non disp.",cx+cellW/2,cy+labelH+imgH/2,{align:"center"});
         }
-        if(ay>260&&idx<spConFoto.length-1){doc.addPage();ay=16;}
-      });
+      }
     }
 
     doc.save("nota-spese-"+[cNome,prog,ST.periodo].filter(Boolean).join("-").replace(/\s+/g,"-")+".pdf");
