@@ -218,9 +218,46 @@ function doPDF(){
     y+=12;doc.setFillColor(15,15,20);doc.rect(M-2,y-6,W-2*M+4,11,"F");
     doc.setTextColor(220,180,80);doc.setFont("helvetica","bold");doc.setFontSize(10);
     doc.text("TOTALE RIMBORSO RICHIESTO",M,y);doc.text("€ "+fmt(tot),W-M,y,{align:"right"});
+
+    // ── Pagine allegati foto ──
+    const spConFoto=sp.filter(s=>s.foto);
+    if(spConFoto.length>0){
+      doc.addPage();
+      doc.setFillColor(15,15,20);doc.rect(0,0,W,20,"F");
+      doc.setTextColor(255,255,255);doc.setFontSize(12);doc.setFont("helvetica","bold");
+      doc.text("ALLEGATI SCONTRINI",M,13);
+      let ay=30;
+      spConFoto.forEach((s,idx)=>{
+        const cat=CAT.find(c=>c.id===s.categoria);
+        const imp=s.categoria==="km"?(parseFloat(s.km)||0)*tk:parseFloat(s.importo||0);
+        const dp=(s.data||"").split("-");
+        const df=dp.length===3?dp[2]+"/"+dp[1]+"/"+dp[0].slice(2):s.data||"";
+        // Label spesa
+        doc.setFillColor(30,30,40);doc.rect(M-2,ay-4,W-2*M+4,10,"F");
+        doc.setTextColor(212,168,71);doc.setFontSize(8);doc.setFont("helvetica","bold");
+        doc.text((idx+1)+". "+df+" — "+(cat?cat.l:s.categoria)+" — "+esc2(s.descrizione||"")+" — € "+fmt(imp),M,ay+2);
+        if(s.clienteId){const cn=(cMap[s.clienteId])||"";if(cn){doc.setTextColor(180,180,180);doc.text("Cliente: "+cn+(s.progetto?" · "+s.progetto:""),W-M,ay+2,{align:"right"});}}
+        ay+=14;
+        // Foto
+        try{
+          const imgH=80,imgW=W-2*M+4;
+          if(ay+imgH>280){doc.addPage();ay=16;}
+          doc.addImage(s.foto,"JPEG",M-2,ay,imgW,imgH,"","MEDIUM");
+          ay+=imgH+10;
+        }catch(e){
+          doc.setTextColor(150,100,100);doc.setFontSize(8);doc.setFont("helvetica","normal");
+          doc.text("[Immagine non incorporabile]",M,ay);
+          ay+=10;
+        }
+        if(ay>260&&idx<spConFoto.length-1){doc.addPage();ay=16;}
+      });
+    }
+
     doc.save("nota-spese-"+[cNome,prog,ST.periodo].filter(Boolean).join("-").replace(/\s+/g,"-")+".pdf");
   });
 }
+// helper per testo PDF (no html entities)
+function esc2(s){return(s||"").replace(/&quot;/g,'"').replace(/&lt;/g,"<").replace(/&amp;/g,"&").substring(0,60);}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const ST={
@@ -463,7 +500,7 @@ function renderImpost(){
   <button class="btn" style="background:transparent;border:1px solid #c0392b;color:#c0392b;margin-top:8px;" onclick="clearLocal()">🗑 Cancella dati locali</button>`;
   const el=document.getElementById("vImpost");if(el)el.innerHTML=h;
 }
-function saveProf(){DB.profilo={nome:(document.getElementById("pN")||{}).value||"",piva:(document.getElementById("pPiva")||{}).value||"",tariffaKm:parseFloat((document.getElementById("pTk")||{}).value)||0.40,anthropicKey:(document.getElementById("pAK")||{}).value||"",aiProxyUrl:(document.getElementById("pPx")||{}).value||""};save();toast("Profilo salvato ✓");showOnly("lista");renderLista();syncProf(DB.profilo);}
+function saveProf(){DB.profilo={nome:(document.getElementById("pN")||{}).value||"",piva:(document.getElementById("pPiva")||{}).value||"",tariffaKm:parseFloat((document.getElementById("pTk")||{}).value)||0.40,anthropicKey:(document.getElementById("pAK")||{}).value||"",aiProxyUrl:(document.getElementById("pPx")||{}).value||""};save();toast("Profilo salvato ✓");syncProf(DB.profilo);}
 function expJSON(){const b=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="notaspese-"+new Date().toISOString().slice(0,10)+".json";a.click();}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();toast("Importato ✓");renderLista();}catch{toast("File non valido",true);}};r.readAsText(f);}
 function reconfigSB(){svCr({url:"",anonKey:""});renderSetup();}
