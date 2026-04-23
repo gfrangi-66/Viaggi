@@ -518,7 +518,9 @@ function renderImpost(){
   <div style="font-size:11px;color:#555;margin-bottom:18px;">ACI 2024: 0,40 €/km</div>
   <label class="lbl">Chiave API Anthropic (AI scontrini)</label><input class="inp" id="pAK" type="password" placeholder="sk-ant-..." value="${esc(p.anthropicKey||"")}">
   <label class="lbl">URL Proxy Cloudflare</label><input class="inp" id="pPx" type="text" placeholder="https://anthropic-proxy.tuonome.workers.dev" value="${esc(p.aiProxyUrl||"")}">
-  <div style="font-size:11px;color:#555;margin-bottom:18px;">Necessario per AI. Vedi cloudflare-worker.js.</div>
+  <div style="font-size:11px;color:#555;margin-bottom:10px;">Necessario per AI. Vedi cloudflare-worker.js.</div>
+  <button class="btn" style="background:#1a1a2e;color:#4B8BE8;border:1px solid #4B8BE8;margin-bottom:4px;" onclick="testAI()">🧪 Testa connessione AI</button>
+  <div id="aiTestResult" style="font-size:12px;border-radius:8px;padding:10px;margin-bottom:14px;display:none;line-height:1.6;word-break:break-all;"></div>
   <button class="btn" onclick="saveProf()">💾 Salva profilo</button>
   <div class="infoBox" style="margin-top:20px;"><strong style="color:#d4a847;">⚠ Backup</strong><br>I dati sono anche nel browser. Esporta regolarmente.</div>
   <button class="btn" style="background:#1a2a1a;color:#4BE84B;border:1px solid #4BE84B;" onclick="expJSON()">⬇ Esporta backup JSON</button>
@@ -528,6 +530,41 @@ function renderImpost(){
   const el=document.getElementById("vImpost");if(el)el.innerHTML=h;
 }
 function saveProf(){DB.profilo={nome:(document.getElementById("pN")||{}).value||"",piva:(document.getElementById("pPiva")||{}).value||"",tariffaKm:parseFloat((document.getElementById("pTk")||{}).value)||0.40,anthropicKey:(document.getElementById("pAK")||{}).value||"",aiProxyUrl:(document.getElementById("pPx")||{}).value||""};save();toast("Profilo salvato ✓");syncProf(DB.profilo);}
+
+async function testAI(){
+  const key=(document.getElementById("pAK")||{}).value||DB.profilo.anthropicKey||"";
+  const proxy=(document.getElementById("pPx")||{}).value||DB.profilo.aiProxyUrl||"";
+  const el=document.getElementById("aiTestResult");
+  if(!el)return;
+  el.style.display="block";
+
+  if(!key){el.style.background="#2a1010";el.style.color="#e87b4b";el.textContent="⚠ Chiave API Anthropic mancante";return;}
+  if(!proxy){el.style.background="#2a1010";el.style.color="#e87b4b";el.textContent="⚠ URL Proxy Cloudflare mancante";return;}
+
+  el.style.background="#1a1a2e";el.style.color="#4B8BE8";el.textContent="⟳ Test in corso…";
+
+  try{
+    const url=proxy.replace(/\/$/,"");
+    const res=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:20,messages:[{role:"user",content:"Rispondi solo: OK"}]})
+    });
+    const txt=await res.text();
+    if(res.ok){
+      let msg="OK";
+      try{const d=JSON.parse(txt);msg=d.content?.[0]?.text||"OK";}catch{}
+      el.style.background="#0e200e";el.style.color="#4BE84B";
+      el.textContent="✓ Connessione AI funzionante! Risposta: "+msg;
+    } else {
+      el.style.background="#2a1010";el.style.color="#e87b4b";
+      el.textContent="✗ Errore "+res.status+": "+txt.substring(0,200);
+    }
+  }catch(e){
+    el.style.background="#2a1010";el.style.color="#e87b4b";
+    el.textContent="✗ "+e.message+" (controlla che l'URL proxy sia corretto e che il Worker sia attivo)";
+  }
+}
 function expJSON(){const b=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="notaspese-"+new Date().toISOString().slice(0,10)+".json";a.click();}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{DB=JSON.parse(ev.target.result);save();toast("Importato ✓");renderLista();}catch{toast("File non valido",true);}};r.readAsText(f);}
 function reconfigSB(){svCr({url:"",anonKey:""});renderSetup();}
