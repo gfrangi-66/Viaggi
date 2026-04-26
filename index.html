@@ -145,7 +145,7 @@ const clSs=()=>{try{localStorage.removeItem(KS);}catch{}ckD(KS);};
 
 // ── PHP BACKEND API ───────────────────────────────────────────────────────────
 class API {
-  constructor(base){ this.base=base.replace(/\/$/,""); this.tok=null; }
+  constructor(base){ this.base=base.replace(/\/$/,"").replace(/^http:/,'https:'); this.tok=null; }
   h(x={}){ return{"Content-Type":"application/json","Authorization":"Bearer "+(this.tok||""),...x}; }
 
   async _req(method,path,body=null){
@@ -652,7 +652,6 @@ async function doSetup(){
       if(btn)btn.textContent="🔗 Connetti backend";return;
     }
     svCr({url:base,anonKey:"php"});
-    sb=new API(base);
     renderLogin();
   }catch(e){
     if(err){err.textContent="Errore: "+e.message;err.classList.remove("hidden");}
