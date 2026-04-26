@@ -151,7 +151,11 @@ class API {
   async _req(method,path,body=null){
     const opts={method,headers:this.h()};
     if(body) opts.body=JSON.stringify(body);
-    const r=await fetch(this.base+"/api.php/"+path,opts);
+    // Prova prima con PATH_INFO, poi con query string (fallback Aruba)
+    let r=await fetch(this.base+"/api.php/"+path,opts);
+    if(r.status===404){
+      r=await fetch(this.base+"/api.php?path="+encodeURIComponent(path),opts);
+    }
     const d=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(d.error||"Errore "+r.status);
     return d;
