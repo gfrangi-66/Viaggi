@@ -691,7 +691,7 @@ async function doLogin(){
     renderApp();ldCloud();
   }catch(e){
     if(e.message==="CONFIRM_EMAIL"){if(info){info.textContent="Controlla la tua email per confermare, poi accedi.";info.classList.remove("hidden");}swTab("accedi");}
-    else{if(err){err.textContent=e.message;err.classList.remove("hidden");}}
+    else{if(err){err.textContent="["+sb.base+"] "+e.message;err.classList.remove("hidden");}}
     if(btn)btn.textContent=loginTab==="accedi"?"→ Accedi":"✓ Crea account";
   }
 }
