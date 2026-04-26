@@ -668,6 +668,15 @@ async function doSetup(){
   }
 }
 function skipSetup(){renderApp();}
+function hardReset(){
+  // Pulisce tutto — localStorage e cookie
+  try{localStorage.clear();}catch{}
+  // Cancella tutti i cookie
+  document.cookie.split(";").forEach(c=>{
+    document.cookie=c.trim().split("=")[0]+"=;expires=Thu,01 Jan 1970 00:00:00 UTC;path=/;";
+  });
+  location.reload();
+}
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 function renderLogin(){
@@ -684,6 +693,11 @@ function renderLogin(){
   <label class="lbl">Password</label><input class="inp" id="lPw" type="password" placeholder="La tua password" onkeydown="if(event.key=='Enter')doLogin()">
   <div id="lErr" class="errBox hidden"></div>
   <button class="btn" id="lBt" onclick="doLogin()">→ Accedi</button>
+  <div style="margin-top:24px;text-align:center;">
+    <button onclick="hardReset()" style="background:none;border:none;color:#444;font-size:12px;cursor:pointer;text-decoration:underline;">
+      Cambia server / Reset completo
+    </button>
+  </div>
   </div></div>`;
 }
 let loginTab="accedi";
