@@ -145,7 +145,7 @@ const clSs=()=>{try{localStorage.removeItem(KS);}catch{}ckD(KS);};
 
 // ── PHP BACKEND API ───────────────────────────────────────────────────────────
 class API {
-  constructor(base){ this.base=base.replace(/\/$/,"").replace(/^http:/,'https:'); this.tok=null; }
+  constructor(base){ this.base=base.replace(/\/$/,"").replace(/^http:/,'https:').replace('https://frangi.net','https://www.frangi.net'); this.tok=null; }
   h(x={}){ return{"Content-Type":"application/json","Authorization":"Bearer "+(this.tok||""),...x}; }
 
   async _req(method,path,body=null){
@@ -631,7 +631,7 @@ alter table profilo enable row level security;
 create policy "own" on spese using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "own" on clienti using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "own" on profilo using (auth.uid()=user_id) with check (auth.uid()=user_id);</pre></details>
-  <label class="lbl">URL backend (frangi.net)</label><input class="inp" id="sUrl" type="text" placeholder="https://frangi.net/notaspese" value="${esc(saved.url||"https://frangi.net/notaspese")}">
+  <label class="lbl">URL backend (frangi.net)</label><input class="inp" id="sUrl" type="text" placeholder="https://www.frangi.net/notaspese" value="${esc(saved.url||"https://www.frangi.net/notaspese")}">
   <input id="sKey" type="hidden" value="php-backend">
   <div id="sErr" class="errBox hidden"></div>
   <button class="btn" id="sBt" onclick="doSetup()">🔗 Collega Supabase</button>
