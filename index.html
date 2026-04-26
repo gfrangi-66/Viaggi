@@ -726,6 +726,15 @@ function renderApp(){
   setSyncUI("idle");renderLista();showOnly("lista");
 }
 (async function init(){
+  // ?reset nell'URL forza reset completo
+  if(location.search.includes("reset")){
+    try{localStorage.clear();}catch{}
+    document.cookie.split(";").forEach(c=>{
+      document.cookie=c.trim().split("=")[0]+"=;expires=Thu,01 Jan 1970 00:00:00 UTC;path=/;";
+    });
+    history.replaceState({},"",location.pathname);
+    renderSetup();return;
+  }
   const cr=ldCr();
   if(!cr.url||!cr.anonKey){renderSetup();return;}
   sb=new API(cr.url);
