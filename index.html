@@ -143,18 +143,43 @@ const ldSs=()=>lsG(KS)||ckG(KS);
 const svSs=v=>{lsS(KS,v);ckS(KS,v,7);};
 const clSs=()=>{try{localStorage.removeItem(KS);}catch{}ckD(KS);};
 
-// ── SUPABASE ──────────────────────────────────────────────────────────────────
-class SB{
-  constructor(u,k){this.url=u.replace(/\/$/,"");this.key=k;this.tok=null;}
-  h(x={}){return{"Content-Type":"application/json","apikey":this.key,"Authorization":"Bearer "+(this.tok||this.key),...x};}
-  async signIn(e,p){const r=await fetch(this.url+"/auth/v1/token?grant_type=password",{method:"POST",headers:this.h(),body:JSON.stringify({email:e,password:p})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.message||"Credenziali non corrette");this.tok=d.access_token;return d;}
-  async signUp(e,p){const r=await fetch(this.url+"/auth/v1/signup",{method:"POST",headers:this.h(),body:JSON.stringify({email:e,password:p})});const d=await r.json();if(!r.ok)throw new Error(d.msg||d.message||"Errore registrazione");if(!d.access_token)throw new Error("CONFIRM_EMAIL");this.tok=d.access_token;return d;}
-  async sess(){const s=ldSs();if(!s)return null;try{if(s.expires_at&&Date.now()/1000>s.expires_at-60){const r=await fetch(this.url+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:this.h(),body:JSON.stringify({refresh_token:s.refresh_token})});if(!r.ok){clSs();return null;}const d=await r.json();this.tok=d.access_token;const ns={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};svSs(ns);return ns;}this.tok=s.access_token;return s;}catch{return null;}}
-  svSess(d){const s={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||3600)};svSs(s);this.tok=d.access_token;}
-  logout(){clSs();this.tok=null;}
-  async sel(t,q=""){const r=await fetch(this.url+"/rest/v1/"+t+"?"+q+"&order=created_at.desc",{headers:this.h({"Prefer":"return=representation"})});if(!r.ok)throw new Error("sel "+t+" "+r.status);return r.json();}
-  async ups(t,row){const r=await fetch(this.url+"/rest/v1/"+t,{method:"POST",headers:this.h({"Prefer":"resolution=merge-duplicates,return=representation"}),body:JSON.stringify(row)});if(!r.ok){let e={};try{e=await r.json();}catch{}throw new Error(e.message||"ups "+r.status);}return r.json();}
-  async del(t,id){const r=await fetch(this.url+"/rest/v1/"+t+"?id=eq."+id,{method:"DELETE",headers:this.h({"Prefer":"return=minimal"})});if(!r.ok)throw new Error("del "+r.status);}
+// ── PHP BACKEND API ───────────────────────────────────────────────────────────
+class API {
+  constructor(base){ this.base=base.replace(/\/$/,""); this.tok=null; }
+  h(x={}){ return{"Content-Type":"application/json","Authorization":"Bearer "+(this.tok||""),...x}; }
+
+  async _req(method,path,body=null){
+    const opts={method,headers:this.h()};
+    if(body) opts.body=JSON.stringify(body);
+    const r=await fetch(this.base+"/api.php/"+path,opts);
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||"Errore "+r.status);
+    return d;
+  }
+
+  async signIn(email,pw){
+    const d=await this._req("POST","auth/signin",{email,password:pw});
+    this.tok=d.access_token; return d;
+  }
+  async signUp(email,pw){
+    const d=await this._req("POST","auth/signup",{email,password:pw});
+    this.tok=d.access_token; return d;
+  }
+  async sess(){
+    const s=ldSs(); if(!s) return null;
+    // Controlla scadenza (30 giorni)
+    if(s.expires_at && Date.now()/1000 > s.expires_at-60){ clSs(); return null; }
+    this.tok=s.access_token;
+    // Verifica che il token sia ancora valido
+    try{ await this._req("GET","auth/me"); return s; }
+    catch{ clSs(); return null; }
+  }
+  svSess(d){ const s={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||2592000)};svSs(s);this.tok=d.access_token; }
+  logout(){ this._req("POST","auth/logout").catch(()=>{}); clSs(); this.tok=null; }
+
+  async sel(t){ return this._req("GET",t); }
+  async ups(t,row){ return this._req("POST",t,row); }
+  async del(t,id){ return this._req("DELETE",t+"/"+id); }
 }
 let sb=null;
 
@@ -324,12 +349,12 @@ function closeModal(id){document.getElementById(id).classList.remove("show");}
 
 // ── SYNC ──────────────────────────────────────────────────────────────────────
 function setSyncUI(st){const el=document.getElementById("hdrSub");if(!el)return;const u=ST.utente;const dot=st==="syncing"?"🔄":st==="ok"?"☁":"⚠";const col=st==="err"?"#e87b4b":st==="ok"?"#4BE84B":"#888";if(u)el.innerHTML='<span style="color:'+col+'">'+dot+' '+(u.email||"").split("@")[0]+"</span>";else el.textContent="locale";}
-async function ldCloud(){if(!sb||!ST.utente)return;setSyncUI("syncing");try{const s=await sb.sess();if(!s)return;const uid=s.user?.id||s.sub||s.user_id;const[sp,cl,pr]=await Promise.all([sb.sel("spese","user_id=eq."+uid),sb.sel("clienti","user_id=eq."+uid),sb.sel("profilo","user_id=eq."+uid)]);const p=pr[0]||{};const lp=lsG(KD)?.profilo||{};DB.profilo={nome:p.nome||"",piva:p.piva||"",tariffaKm:p.tariffa_km||0.40,anthropicKey:lp.anthropicKey||"",aiProxyUrl:lp.aiProxyUrl||""};DB.spese=sp.map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));DB.clienti=cl.map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));save();setSyncUI("ok");renderLista();}catch(e){setSyncUI("err");toast("Sync: "+e.message,true);}}
-async function syncSp(sp){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;setSyncUI("syncing");try{await sb.ups("spese",{id:String(sp.id),user_id:uid,data:sp.data,categoria:sp.categoria,importo:sp.importo?parseFloat(sp.importo):null,km:sp.km?parseFloat(sp.km):null,partenza:sp.partenza||null,arrivo:sp.arrivo||null,descrizione:sp.descrizione,note:sp.note||null,foto:sp.foto||null,foto_media_type:sp.fotoMime||null,cliente_id:sp.clienteId||null,progetto:sp.progetto||null});setSyncUI("ok");}catch(e){setSyncUI("err");toast("Cloud: "+e.message,true);}}
+async function ldCloud(){if(!sb||!ST.utente)return;setSyncUI("syncing");try{const[sp,cl,pr]=await Promise.all([sb.sel("spese"),sb.sel("clienti"),sb.sel("profilo")]);const p=(Array.isArray(pr)?pr[0]:pr)||{};const lp=lsG(KD)?.profilo||{};DB.profilo={nome:p.nome||"",piva:p.piva||"",tariffaKm:parseFloat(p.tariffa_km)||0.40,anthropicKey:lp.anthropicKey||"",aiProxyUrl:lp.aiProxyUrl||""};DB.spese=(Array.isArray(sp)?sp:[]).map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));DB.clienti=(Array.isArray(cl)?cl:[]).map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));save();setSyncUI("ok");renderLista();}catch(e){setSyncUI("err");toast("Sync: "+e.message,true);}}
+async function syncSp(sp){if(!sb||!ST.utente)return;setSyncUI("syncing");try{await sb.ups("spese",{id:String(sp.id),data:sp.data,categoria:sp.categoria,importo:sp.importo?parseFloat(sp.importo):null,km:sp.km?parseFloat(sp.km):null,partenza:sp.partenza||null,arrivo:sp.arrivo||null,descrizione:sp.descrizione,note:sp.note||null,foto:sp.foto||null,foto_media_type:sp.fotoMime||null,cliente_id:sp.clienteId||null,progetto:sp.progetto||null});setSyncUI("ok");}catch(e){setSyncUI("err");toast("Cloud: "+e.message,true);}}
 async function syncDSp(id){if(!sb||!ST.utente)return;try{await sb.del("spese",id);}catch{}}
-async function syncCl(c){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;try{await sb.ups("clienti",{id:String(c.id),user_id:uid,nome:c.nome,piva:c.piva||null,email:c.email||null,colore:c.colore});}catch{}}
+async function syncCl(c){if(!sb||!ST.utente)return;try{await sb.ups("clienti",{id:String(c.id),nome:c.nome,piva:c.piva||null,email:c.email||null,colore:c.colore});}catch{}}
 async function syncDCl(id){if(!sb||!ST.utente)return;try{await sb.del("clienti",id);}catch{}}
-async function syncProf(p){if(!sb||!ST.utente)return;const s=await sb.sess().catch(()=>null);if(!s)return;const uid=s.user?.id||s.sub||s.user_id;try{await sb.ups("profilo",{id:uid,user_id:uid,nome:p.nome,piva:p.piva,tariffa_km:parseFloat(p.tariffaKm)||0.40});}catch{}}
+async function syncProf(p){if(!sb||!ST.utente)return;try{await sb.ups("profilo",{nome:p.nome,piva:p.piva,tariffa_km:parseFloat(p.tariffaKm)||0.40});}catch{}}
 
 // ── RENDER LISTA ──────────────────────────────────────────────────────────────
 function renderLista(){
@@ -578,10 +603,10 @@ function renderSetup(){
   if(!el)return;el.classList.remove("hidden");
   el.innerHTML=`<div style="min-height:100vh;background:#0f0f14;display:flex;align-items:center;justify-content:center;padding:20px;"><div style="background:#17171f;border:1px solid #2a2a38;border-radius:20px;padding:32px 28px;width:100%;max-width:440px;">
   <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d4a847,#e87b4b);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0f0f14;margin:0 auto 16px;">NS</div>
-  <div style="font-size:22px;font-weight:800;text-align:center;margin-bottom:4px;">Collega Supabase</div>
-  <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px;">Sincronizzazione cloud gratuita</div>
-  <div style="background:#0e1620;border:1px solid #1e3050;border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#888;line-height:1.7;"><strong style="color:#4B8BE8;">3 passi su supabase.com:</strong><br>1. Crea account → nuovo progetto<br>2. Settings → API → copia URL e "anon public key"<br>3. SQL Editor → esegui lo script (vedi sotto)</div>
-  <details style="margin-bottom:16px;"><summary>📋 Script SQL da eseguire</summary>
+  <div style="font-size:22px;font-weight:800;text-align:center;margin-bottom:4px;">Configura Backend</div>
+  <div style="font-size:13px;color:#666;text-align:center;margin-bottom:20px;">frangi.net · PHP + MySQL</div>
+  <div style="background:#0e1620;border:1px solid #1e3050;border-radius:10px;padding:14px;margin-bottom:16px;font-size:12px;color:#888;line-height:1.7;"><strong style="color:#4B8BE8;">Setup su frangi.net:</strong><br>1. Carica <strong>api.php</strong> e <strong>config.php</strong> in <code>/notaspese/</code><br>2. Compila config.php con i dati MySQL<br>3. Inserisci l'URL qui sotto e clicca Connetti</div>
+  <details style="margin-bottom:16px;display:none;"><summary>📋 Script SQL</summary>
   <pre>create table if not exists spese (
   id text primary key, user_id uuid references auth.users,
   data text, categoria text, importo float, km float,
@@ -602,19 +627,33 @@ alter table profilo enable row level security;
 create policy "own" on spese using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "own" on clienti using (auth.uid()=user_id) with check (auth.uid()=user_id);
 create policy "own" on profilo using (auth.uid()=user_id) with check (auth.uid()=user_id);</pre></details>
-  <label class="lbl">Project URL</label><input class="inp" id="sUrl" type="text" placeholder="https://xxxx.supabase.co" value="${esc(saved.url||"")}">
-  <label class="lbl">Anon public key</label><input class="inp" id="sKey" type="text" placeholder="eyJhbGciOiJIUzI1NiIs..." value="${esc(saved.anonKey||"")}">
+  <label class="lbl">URL backend (frangi.net)</label><input class="inp" id="sUrl" type="text" placeholder="https://frangi.net/notaspese" value="${esc(saved.url||"https://frangi.net/notaspese")}">
+  <input id="sKey" type="hidden" value="php-backend">
   <div id="sErr" class="errBox hidden"></div>
   <button class="btn" id="sBt" onclick="doSetup()">🔗 Collega Supabase</button>
   <button class="btn-out" onclick="skipSetup()">Usa solo in locale</button>
   </div></div>`;
 }
 async function doSetup(){
-  const url=(document.getElementById("sUrl")||{}).value||"",key=(document.getElementById("sKey")||{}).value||"";
+  const url=(document.getElementById("sUrl")||{}).value||"";
   const err=document.getElementById("sErr"),btn=document.getElementById("sBt");
-  if(!url||!key){if(err){err.textContent="Inserisci entrambi i campi";err.classList.remove("hidden");}return;}
+  if(!url){if(err){err.textContent="Inserisci l\'URL del backend";err.classList.remove("hidden");}return;}
   if(btn)btn.textContent="Connessione…";
-  try{sb=new SB(url.trim(),key.trim());try{await sb.sel("spese","limit=1");}catch(e){if(e.message.includes("401")||e.message.includes("403")){if(err){err.textContent="Credenziali non valide";err.classList.remove("hidden");}if(btn)btn.textContent="🔗 Collega Supabase";return;}}svCr({url:url.trim(),anonKey:key.trim()});renderLogin();}catch{svCr({url:url.trim(),anonKey:key.trim()});renderLogin();}
+  try{
+    const base=url.trim().replace(/\/$/,"");
+    const r=await fetch(base+"/api.php/ping");
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.status!=="ok"){
+      if(err){err.textContent="Backend non raggiungibile: "+(d.error||r.status);err.classList.remove("hidden");}
+      if(btn)btn.textContent="🔗 Connetti backend";return;
+    }
+    svCr({url:base,anonKey:"php"});
+    sb=new API(base);
+    renderLogin();
+  }catch(e){
+    if(err){err.textContent="Errore: "+e.message;err.classList.remove("hidden");}
+    if(btn)btn.textContent="🔗 Connetti backend";
+  }
 }
 function skipSetup(){renderApp();}
 
@@ -663,7 +702,7 @@ function renderApp(){
 (async function init(){
   const cr=ldCr();
   if(!cr.url||!cr.anonKey){renderSetup();return;}
-  sb=new SB(cr.url,cr.anonKey);
+  sb=new API(cr.url);
   const s=await sb.sess().catch(()=>null);
   if(s){ST.utente=s.user||{email:"utente"};renderApp();ldCloud();}
   else renderLogin();
