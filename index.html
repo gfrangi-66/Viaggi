@@ -180,12 +180,9 @@ class API {
   }
   async sess(){
     const s=ldSs(); if(!s) return null;
-    // Controlla scadenza (30 giorni)
     if(s.expires_at && Date.now()/1000 > s.expires_at-60){ clSs(); return null; }
     this.tok=s.access_token;
-    // Verifica che il token sia ancora valido
-    try{ await this._req("GET","auth/me"); return s; }
-    catch{ clSs(); return null; }
+    return s;
   }
   svSess(d){ const s={...d,expires_at:Math.floor(Date.now()/1000)+(d.expires_in||2592000)};svSs(s);this.tok=d.access_token; }
   logout(){ this._req("POST","auth/logout").catch(()=>{}); clSs(); this.tok=null; }
