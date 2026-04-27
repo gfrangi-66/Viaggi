@@ -151,13 +151,13 @@ class API {
   async _req(method,path,body=null){
     const opts={method,headers:this.h()};
     if(body) opts.body=JSON.stringify(body);
-    // Usa AbortController per timeout 15 secondi
     const ctrl=new AbortController();
     const timer=setTimeout(()=>ctrl.abort(),15000);
     opts.signal=ctrl.signal;
     try{
-      // Usa sempre query string — più affidabile su Aruba
-      const url=this.base+"/api.php?path="+path;
+      // Passa token anche come query param (fallback se CORS blocca Authorization header)
+      const tokenParam = this.tok ? "&token="+this.tok : "";
+      const url=this.base+"/api.php?path="+path+tokenParam;
       const r=await fetch(url,opts);
       clearTimeout(timer);
       const d=await r.json().catch(()=>({}));
