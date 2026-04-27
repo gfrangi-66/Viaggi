@@ -359,7 +359,21 @@ function closeModal(id){document.getElementById(id).classList.remove("show");}
 
 // ── SYNC ──────────────────────────────────────────────────────────────────────
 function setSyncUI(st){const el=document.getElementById("hdrSub");if(!el)return;const u=ST.utente;const dot=st==="syncing"?"🔄":st==="ok"?"☁":"⚠";const col=st==="err"?"#e87b4b":st==="ok"?"#4BE84B":"#888";if(u)el.innerHTML='<span style="color:'+col+'">'+dot+' '+(u.email||"").split("@")[0]+"</span>";else el.textContent="locale";}
-async function ldCloud(){if(!sb||!ST.utente)return;setSyncUI("syncing");try{const[sp,cl,pr]=await Promise.all([sb.sel("spese"),sb.sel("clienti"),sb.sel("profilo")]);const p=(Array.isArray(pr)?pr[0]:pr)||{};const lp=lsG(KD)?.profilo||{};DB.profilo={nome:p.nome||"",piva:p.piva||"",tariffaKm:parseFloat(p.tariffa_km)||0.40,anthropicKey:lp.anthropicKey||"",aiProxyUrl:lp.aiProxyUrl||""};DB.spese=(Array.isArray(sp)?sp:[]).map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));DB.clienti=(Array.isArray(cl)?cl:[]).map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));save();setSyncUI("ok");renderLista();}catch(e){setSyncUI("err");toast("Sync: "+e.message,true);}}
+async function ldCloud(){
+  if(!sb){toast("Sync: sb null",true);return;}
+  if(!ST.utente){toast("Sync: utente null",true);return;}
+  if(!sb.tok){toast("Sync: token mancante",true);return;}
+  setSyncUI("syncing");
+  try{
+    const[sp,cl,pr]=await Promise.all([sb.sel("spese"),sb.sel("clienti"),sb.sel("profilo")]);
+    const p=(Array.isArray(pr)?pr[0]:pr)||{};
+    const lp=lsG(KD)?.profilo||{};
+    DB.profilo={nome:p.nome||"",piva:p.piva||"",tariffaKm:parseFloat(p.tariffa_km)||0.40,anthropicKey:lp.anthropicKey||"",aiProxyUrl:lp.aiProxyUrl||""};
+    DB.spese=(Array.isArray(sp)?sp:[]).map(s=>({id:s.id,data:s.data,categoria:s.categoria,importo:s.importo,km:s.km,partenza:s.partenza,arrivo:s.arrivo,descrizione:s.descrizione,note:s.note,foto:s.foto,fotoMime:s.foto_media_type,clienteId:s.cliente_id,progetto:s.progetto}));
+    DB.clienti=(Array.isArray(cl)?cl:[]).map(c=>({id:c.id,nome:c.nome,piva:c.piva,email:c.email,colore:c.colore}));
+    save();setSyncUI("ok");renderLista();
+  }catch(e){setSyncUI("err");toast("Sync: "+e.message+" [tok:"+sb.tok?.substring(0,8)+"]",true);}
+}
 async function syncSp(sp){if(!sb||!ST.utente)return;setSyncUI("syncing");try{await sb.ups("spese",{id:String(sp.id),data:sp.data,categoria:sp.categoria,importo:sp.importo?parseFloat(sp.importo):null,km:sp.km?parseFloat(sp.km):null,partenza:sp.partenza||null,arrivo:sp.arrivo||null,descrizione:sp.descrizione,note:sp.note||null,foto:sp.foto||null,foto_media_type:sp.fotoMime||null,cliente_id:sp.clienteId||null,progetto:sp.progetto||null});setSyncUI("ok");}catch(e){setSyncUI("err");toast("Cloud: "+e.message,true);}}
 async function syncDSp(id){if(!sb||!ST.utente)return;try{await sb.del("spese",id);}catch{}}
 async function syncCl(c){if(!sb||!ST.utente)return;try{await sb.ups("clienti",{id:String(c.id),nome:c.nome,piva:c.piva||null,email:c.email||null,colore:c.colore});}catch{}}
