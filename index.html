@@ -770,6 +770,7 @@ async function doLogin(){
   if(loginTab==="registrati"&&pw.length<6){if(err){err.textContent="Password minimo 6 caratteri";err.classList.remove("hidden");}return;}
   if(btn)btn.textContent="…";if(err)err.classList.add("hidden");
   try{
+    if(!sb){if(err){err.textContent="Backend non configurato — ricarica la pagina";err.classList.remove("hidden");}if(btn)btn.textContent="→ Accedi";return;}
     const loginUrl=sb.base+"/api.php?path="+(loginTab==="accedi"?"auth/signin":"auth/signup");
     if(info){info.textContent="→ "+loginUrl;info.classList.remove("hidden");}
     const d=loginTab==="accedi"?await sb.signIn(em.trim(),pw.trim()):await sb.signUp(em.trim(),pw.trim());
@@ -778,7 +779,7 @@ async function doLogin(){
     renderApp();ldCloud();
   }catch(e){
     if(e.message==="CONFIRM_EMAIL"){if(info){info.textContent="Controlla la tua email per confermare, poi accedi.";info.classList.remove("hidden");}swTab("accedi");}
-    else{if(err){err.textContent="["+sb.base+"] "+e.message;err.classList.remove("hidden");}}
+    else{if(err){err.textContent="["+(sb?sb.base:"null")+"] "+e.message;err.classList.remove("hidden");}}
     if(btn)btn.textContent=loginTab==="accedi"?"→ Accedi":"✓ Crea account";
   }
 }
