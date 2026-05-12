@@ -323,7 +323,7 @@ async function doPDF(){
       doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");
       doc.text("ALLEGATI PERCORSI KM",M,13);
       // Layout: 2 mappe per pagina
-      const mW=W-2*M, mH=62, mLabelH=10;
+      const mW=W-2*M, mH=mW*0.52, mLabelH=10; // 2 mappe quadrate per pagina (52% della larghezza = ~88mm)
       let my=28;
       let mapIdx=0;
       // Carica mappe in sequenza
@@ -348,7 +348,7 @@ async function doPDF(){
             // Distanza reale
             doc.setFillColor(0,0,0,0.5);
             doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont("helvetica","bold");
-            doc.text("Distanza: "+d.distanza_km+" km",M+mW-2,my+mLabelH+mH-3,{align:"right"});
+            doc.text("Distanza: "+String(s.km||d.distanza_km)+" km",M+mW-2,my+mLabelH+mH-3,{align:"right"});
           }
         }catch(e){
           doc.setFillColor(20,20,30);doc.rect(M,my+mLabelH,mW,mH,"F");
@@ -357,7 +357,7 @@ async function doPDF(){
         }
         doc.setDrawColor(40,40,60);doc.rect(M,my,mW,mLabelH+mH);
         my+=mLabelH+mH+8;
-        if(my>250 && idx<spKm.length-1){doc.addPage();doc.setFillColor(15,15,20);doc.rect(0,0,W,20,"F");doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text("ALLEGATI PERCORSI KM (continua)",M,13);my=28;}
+        if(my+mLabelH+mH>272 && idx<spKm.length-1){doc.addPage();doc.setFillColor(15,15,20);doc.rect(0,0,W,20,"F");doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text("ALLEGATI PERCORSI KM (continua)",M,13);my=28;}
       }
       // Esegui in sequenza (async dentro funzione sincrona — usiamo then chain)
       let chain=Promise.resolve();
